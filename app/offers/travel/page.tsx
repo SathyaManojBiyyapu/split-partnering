@@ -1,30 +1,14 @@
-export default function TravelOffers() {
-    const offers = [
-      {
-        title: "Flight Discounts ✈️",
-        desc: "International + Domestic lowest airfare deals.",
-        deal: "Up to 48% OFF",
-      },
-      {
-        title: "Hotel Stay Packages 🏨",
-        desc: "Luxury, budget, romantic, family — all categories.",
-        deal: "Book now & save big",
-      },
-      {
-        title: "Holiday Experience Bundles 🌍",
-        desc: "Bali, Goa, Singapore, Dubai & more.",
-        deal: "Seasonal special pricing",
-      },
-    ];
-  
-    return (
-      <PageTemplate
-        title="🌍 Travel & Holiday Deals"
-        subtitle="Trips, flights, hotels — at prices you'll love."
-        offers={offers}
-      />
-    );
-  }
-  
-  import PageTemplate from "@/app/components/PageTemplate";
-''  
+import PageTemplate from "@/components/PageTemplate";
+
+export default function FashionOffers() {
+  return (
+    <PageTemplate
+      title="Fashion Deals"
+      subtitle="Split trendy purchases and save more."
+      offers={[
+        { title: "Zara", desc: "Flat 40% sale", deal: "Split plan ₹399 each" },
+        { title: "H&M", desc: "Buy 2 Get 1 Free", deal: "Partner split plan" },
+      ]}
+    />
+  );
+}

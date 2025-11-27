@@ -1,30 +1,14 @@
-export default function GymOffers() {
-    const offers = [
-      {
-        title: "FitPass Multi-Gym 🎟",
-        desc: "One subscription → access 50+ partnered gyms!",
-        deal: "New users save 30%",
-      },
-      {
-        title: "Personal Training 🏋️",
-        desc: "1-on-1 fitness trainers for fast transformation.",
-        deal: "Weekly + monthly plans",
-      },
-      {
-        title: "Protein Supplements 💪",
-        desc: "Whey, Creatine, Multivitamins — authentic only.",
-        deal: "Flat ₹600 OFF",
-      },
-    ];
-  
-    return (
-      <PageTemplate
-        title="💪 Fitness & Gym Offers"
-        subtitle="Health + pocket friendly workout offers."
-        offers={offers}
-      />
-    );
-  }
-  
-  import PageTemplate from "@/app/components/PageTemplate";
-  
+import PageTemplate from "@/components/PageTemplate";
+
+export default function FashionOffers() {
+  return (
+    <PageTemplate
+      title="Fashion Deals"
+      subtitle="Split trendy purchases and save more."
+      offers={[
+        { title: "Zara", desc: "Flat 40% sale", deal: "Split plan ₹399 each" },
+        { title: "H&M", desc: "Buy 2 Get 1 Free", deal: "Partner split plan" },
+      ]}
+    />
+  );
+}
