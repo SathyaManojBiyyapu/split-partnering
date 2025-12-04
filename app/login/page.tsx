@@ -1,30 +1,34 @@
 "use client";
 
 import { useState } from "react";
-import { auth, RecaptchaVerifier, signInWithPhoneNumber } from "@/firebase/config";
+import { auth, RecaptchaVerifier, signInWithPhoneNumber } from "../../firebase/config"; // <- changed
 
 export default function LoginPage() {
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
-  const [confirmation, setConfirmation] = useState(null);
+  const [confirmation, setConfirmation] = useState<any>(null);
 
   const sendOTP = async () => {
+    if (!phone) return alert("Enter mobile number");
     try {
       const recaptcha = new RecaptchaVerifier(auth, "recaptcha-container", { size: "invisible" });
       const result = await signInWithPhoneNumber(auth, "+91" + phone, recaptcha);
       setConfirmation(result);
       alert("OTP sent!");
-    } catch {
-      alert("Error sending OTP");
+    } catch (error) {
+      console.error(error);
+      alert("Error sending OTP. Try again.");
     }
   };
 
   const verifyOTP = async () => {
+    if (!confirmation) return alert("No OTP request found");
     try {
       await confirmation.confirm(otp);
       alert("Login Successful!");
       window.location.href = "/categories";
-    } catch {
+    } catch (err) {
+      console.error(err);
       alert("Invalid OTP");
     }
   };
@@ -41,19 +45,25 @@ export default function LoginPage() {
         style={{ padding: 10, width: 250 }}
       />
 
-      <button onClick={sendOTP} style={{ padding: 10, marginTop: 10 }}>
+      <br /><br />
+
+      <button onClick={sendOTP} style={{ padding: "10px 20px", background: "lime", borderRadius: 5 }}>
         Send OTP
       </button>
+
+      <br /><br />
 
       <input
         type="number"
         placeholder="Enter OTP"
         value={otp}
         onChange={(e) => setOtp(e.target.value)}
-        style={{ padding: 10, width: 250, marginTop: 20 }}
+        style={{ padding: 10, width: 250 }}
       />
 
-      <button onClick={verifyOTP} style={{ padding: 10, marginTop: 10 }}>
+      <br /><br />
+
+      <button onClick={verifyOTP} style={{ padding: "10px 20px", background: "cyan", borderRadius: 5 }}>
         Verify OTP
       </button>
 
