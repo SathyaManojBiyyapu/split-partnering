@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import SwipeCard from "../components/SwipeCard";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 
 const offersData: any = {
   lenskart: [
@@ -31,33 +32,46 @@ const offersData: any = {
   ],
 };
 
-export default function OfferSwipePage({ params }: any) {
-  // 🔥 DEBUG + SAFE SLUG — FIX FOR PRODUCTION
-  const rawSlug = params?.slug; // original from router
-  const slug = (rawSlug || "").toString().trim().toLowerCase(); // cleaned slug
+export default function OfferSwipePage(props: any) {
+  // 1) Try params passed from the server (props.params)
+  const rawSlugFromProps = props?.params?.slug;
 
-  console.log("🔥 RAW SLUG =", rawSlug);
-  console.log("🔥 PROCESSED SLUG =", slug);
-  console.log("🔥 AVAILABLE KEYS =", Object.keys(offersData));
-  console.log("🔥 MATCHED OFFERS =", offersData[slug]);
+  // 2) Fallback to client-side useParams hook
+  const paramsHook = useParams();
+  const rawSlugFromHook = paramsHook?.slug;
+
+  // pick whichever is defined, trim and normalize
+  const rawSlug = (rawSlugFromProps ?? rawSlugFromHook ?? "").toString();
+  const slug = rawSlug.trim().toLowerCase();
+
+  // (optional) if slug is still empty, you can parse from pathname as last-resort,
+  // but first we rely on the props/hook combo which is the correct approach.
 
   const offers = offersData[slug] || [];
   const [index, setIndex] = useState(0);
+  const [ready, setReady] = useState(false);
+
+  // small effect to mark ready once slug is resolved (prevents flicker)
+  useEffect(() => {
+    if (slug) setReady(true);
+    // If slug is empty, we still set ready to true so page shows helpful message.
+    else setReady(true);
+  }, [slug]);
 
   const handleSwipe = () => {
     setIndex((prev: number) => prev + 1);
   };
 
-  // ❌ If category has no offers
+  if (!ready) {
+    return <p className="p-5 text-white">Loading...</p>;
+  }
+
+  // No offers in this category
   if (!offers.length) {
     return (
       <main className="text-center text-white p-10">
-        <h1 className="text-3xl font-bold text-[#16FF6E] mb-3">
-          No offers found 🚫
-        </h1>
-        <p className="text-gray-300 mb-6">
-          This category doesn't have any offers yet.
-        </p>
+        <h1 className="text-3xl font-bold text-[#16FF6E] mb-3">No offers found 🚫</h1>
+        <p className="text-gray-300 mb-6">This category doesn't have any offers yet.</p>
 
         <Link href="/categories" className="underline text-[#16FF6E] text-lg">
           ← Back to Categories
@@ -68,16 +82,12 @@ export default function OfferSwipePage({ params }: any) {
 
   const currentOffer = offers[index];
 
-  // 🎉 If user swiped all offers
+  // All offers viewed
   if (!currentOffer) {
     return (
       <main className="text-center text-white p-10">
-        <h1 className="text-3xl font-bold text-[#16FF6E] mb-3">
-          No more offers 🎉
-        </h1>
-        <p className="text-gray-300 mb-6">
-          You viewed all offers in this category.
-        </p>
+        <h1 className="text-3xl font-bold text-[#16FF6E] mb-3">No more offers 🎉</h1>
+        <p className="text-gray-300 mb-6">You viewed all offers in this category.</p>
 
         <Link href="/categories" className="underline text-[#16FF6E] text-lg">
           ← Back to Categories
@@ -89,7 +99,7 @@ export default function OfferSwipePage({ params }: any) {
   return (
     <main className="text-center flex flex-col items-center p-10 text-white">
       <h1 className="text-3xl font-bold text-[#16FF6E] mb-6">
-        Swipe Offers in {slug[0]?.toUpperCase() + slug.slice(1)}
+        Swipe Offers in {slug ? slug[0]?.toUpperCase() + slug.slice(1) : "Category"}
       </h1>
 
       <SwipeCard offer={currentOffer} onSwipe={handleSwipe} />
