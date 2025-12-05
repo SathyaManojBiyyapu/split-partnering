@@ -4,7 +4,7 @@ import { useState } from "react";
 import { auth } from "@/firebase/config";
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 
-// Fix: allow global recaptcha reference
+// Fix TypeScript: Declare global window property
 declare global {
   interface Window {
     recaptchaVerifier: RecaptchaVerifier | null;
@@ -16,25 +16,26 @@ export default function LoginPage() {
   const [otp, setOtp] = useState("");
   const [confirmation, setConfirmation] = useState<any>(null);
 
-  // ✅ CORRECT FIREBASE v9 RECAPTCHA SETUP
+  // ✅ CORRECT FIREBASE v9 RECAPTCHA SETUP (AUTH FIRST!)
   const setupRecaptcha = () => {
-    // Clear previous captcha
+    // Clear previous captcha instance
     window.recaptchaVerifier = null;
 
     window.recaptchaVerifier = new RecaptchaVerifier(
-      "recaptcha-container",
+      auth, // 1️⃣ AUTH MUST BE FIRST
+      "recaptcha-container", // 2️⃣ Element ID
       {
         size: "invisible",
         callback: () => {
           console.log("Recaptcha solved!");
-        }
-      },
-      auth // IMPORTANT: AUTH MUST BE LAST
+        },
+      }
     );
 
     return window.recaptchaVerifier;
   };
 
+  // ✅ SEND OTP
   const sendOTP = async () => {
     if (!phone) return alert("Enter mobile number");
 
@@ -62,6 +63,7 @@ export default function LoginPage() {
     }
   };
 
+  // ✅ VERIFY OTP
   const verifyOTP = async () => {
     if (!otp) return alert("Enter OTP");
 
@@ -90,7 +92,11 @@ export default function LoginPage() {
 
       <button
         onClick={sendOTP}
-        style={{ padding: "10px 20px", background: "lime", borderRadius: 5 }}
+        style={{
+          padding: "10px 20px",
+          background: "lime",
+          borderRadius: 5,
+        }}
       >
         Send OTP
       </button>
@@ -109,12 +115,16 @@ export default function LoginPage() {
 
       <button
         onClick={verifyOTP}
-        style={{ padding: "10px 20px", background: "cyan", borderRadius: 5 }}
+        style={{
+          padding: "10px 20px",
+          background: "cyan",
+          borderRadius: 5,
+        }}
       >
         Verify OTP
       </button>
 
-      {/* required for firebase */}
+      {/* Required by Firebase */}
       <div id="recaptcha-container"></div>
     </div>
   );
