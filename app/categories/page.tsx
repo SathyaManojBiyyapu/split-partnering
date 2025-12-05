@@ -18,11 +18,17 @@ export default function CategoriesPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
 
+  // FIX: Only redirect if Firebase finished checking auth
   useEffect(() => {
-    if (!loading && !user) router.push("/login");
-  }, [user, loading]);
+    if (!loading && !user) {
+      router.push("/login");
+    }
+  }, [user, loading, router]);
 
-  if (loading) return <p className="p-5 text-white">Checking login...</p>;
+  // FIX: Do NOT redirect while Firebase is checking authentication
+  if (loading) {
+    return <p className="p-5 text-white">Checking login...</p>;
+  }
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10 text-white">
@@ -30,7 +36,8 @@ export default function CategoriesPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {categories.map((cat) => (
-          <Link key={cat.key}
+          <Link
+            key={cat.key}
             href={`/offers/${cat.key}`}
             className="rounded-2xl border border-[#16FF6E]/30 p-5 bg-black/60 hover:border-[#16FF6E]"
           >
