@@ -32,7 +32,8 @@ const offersData: any = {
 };
 
 export default function OfferSwipePage({ params }: any) {
-  const slug = params.slug.toLowerCase();
+  // ✅ PRODUCTION SAFE FIX — prevents crash
+  const slug = (params?.slug || "").toString().toLowerCase();
 
   const offers = offersData[slug] || [];
   const [index, setIndex] = useState(0);
@@ -41,6 +42,7 @@ export default function OfferSwipePage({ params }: any) {
     setIndex((prev: number) => prev + 1);
   };
 
+  // No offers in this category
   if (!offers.length) {
     return (
       <main className="text-center text-white p-10">
@@ -51,10 +53,7 @@ export default function OfferSwipePage({ params }: any) {
           This category doesn't have any offers yet.
         </p>
 
-        <Link
-          href="/categories"
-          className="underline text-[#16FF6E] text-lg"
-        >
+        <Link href="/categories" className="underline text-[#16FF6E] text-lg">
           ← Back to Categories
         </Link>
       </main>
@@ -63,6 +62,7 @@ export default function OfferSwipePage({ params }: any) {
 
   const currentOffer = offers[index];
 
+  // All offers viewed
   if (!currentOffer) {
     return (
       <main className="text-center text-white p-10">
@@ -73,10 +73,7 @@ export default function OfferSwipePage({ params }: any) {
           You viewed all offers in this category.
         </p>
 
-        <Link
-          href="/categories"
-          className="underline text-[#16FF6E] text-lg"
-        >
+        <Link href="/categories" className="underline text-[#16FF6E] text-lg">
           ← Back to Categories
         </Link>
       </main>
@@ -86,7 +83,7 @@ export default function OfferSwipePage({ params }: any) {
   return (
     <main className="text-center flex flex-col items-center p-10 text-white">
       <h1 className="text-3xl font-bold text-[#16FF6E] mb-6">
-        Swipe Offers in {slug[0].toUpperCase() + slug.slice(1)}
+        Swipe Offers in {slug[0]?.toUpperCase() + slug.slice(1)}
       </h1>
 
       <SwipeCard offer={currentOffer} onSwipe={handleSwipe} />
