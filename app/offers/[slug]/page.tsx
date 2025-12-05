@@ -32,8 +32,14 @@ const offersData: any = {
 };
 
 export default function OfferSwipePage({ params }: any) {
-  // ✅ PRODUCTION SAFE FIX — prevents crash
-  const slug = (params?.slug || "").toString().toLowerCase();
+  // 🔥 DEBUG + SAFE SLUG — FIX FOR PRODUCTION
+  const rawSlug = params?.slug; // original from router
+  const slug = (rawSlug || "").toString().trim().toLowerCase(); // cleaned slug
+
+  console.log("🔥 RAW SLUG =", rawSlug);
+  console.log("🔥 PROCESSED SLUG =", slug);
+  console.log("🔥 AVAILABLE KEYS =", Object.keys(offersData));
+  console.log("🔥 MATCHED OFFERS =", offersData[slug]);
 
   const offers = offersData[slug] || [];
   const [index, setIndex] = useState(0);
@@ -42,7 +48,7 @@ export default function OfferSwipePage({ params }: any) {
     setIndex((prev: number) => prev + 1);
   };
 
-  // No offers in this category
+  // ❌ If category has no offers
   if (!offers.length) {
     return (
       <main className="text-center text-white p-10">
@@ -62,7 +68,7 @@ export default function OfferSwipePage({ params }: any) {
 
   const currentOffer = offers[index];
 
-  // All offers viewed
+  // 🎉 If user swiped all offers
   if (!currentOffer) {
     return (
       <main className="text-center text-white p-10">
