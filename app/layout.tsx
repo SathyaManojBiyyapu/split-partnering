@@ -1,25 +1,31 @@
-import type { Metadata } from "next";
-import "./globals.css";
+"use client";
+
+import { useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import Navbar from "./components/Navbar";
-import { AuthProvider } from "./context/AuthContext";
+import "./globals.css";
 
-export const metadata: Metadata = {
-  title: "Split Partnering",
-  description: "Match people on real-world offers and deals.",
-};
+export default function RootLayout({ children }: any) {
+  const pathname = usePathname();
+  const router = useRouter();
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+  useEffect(() => {
+    const loggedIn = localStorage.getItem("loggedIn");
+
+    // Allow login page always
+    if (pathname === "/login") return;
+
+    // If NOT logged in → redirect to login
+    if (!loggedIn) {
+      router.push("/login");
+    }
+  }, [pathname]);
+
   return (
     <html lang="en">
-      <body className="bg-black text-white min-h-screen">
-        <AuthProvider>
-          <Navbar />
-          {children}
-        </AuthProvider>
+      <body className="bg-black text-white">
+        <Navbar />
+        {children}
       </body>
     </html>
   );

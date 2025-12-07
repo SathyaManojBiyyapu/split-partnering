@@ -2,12 +2,9 @@
 
 import { useState } from "react";
 import { auth } from "@/firebase/config";
-import {
-  RecaptchaVerifier,
-  signInWithPhoneNumber,
-} from "firebase/auth";
+import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 
-// Add this for TypeScript
+// Add types to window
 declare global {
   interface Window {
     recaptchaVerifier: RecaptchaVerifier | null;
@@ -18,108 +15,101 @@ declare global {
 export default function LoginPage() {
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
-  const [confirmation, setConfirmation] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
 
-  // ⭐ Correct Firebase Recaptcha Setup
-  const setupRecaptcha = () => {
-    if (!window.recaptchaVerifier) {
-      window.recaptchaVerifier = new RecaptchaVerifier(
-        "recaptcha-container",         // <-- element ID FIRST
-        {
-          size: "invisible",
-          callback: () => {
-            console.log("Captcha Solved!");
-          },
-        },
-        auth                              // <-- auth goes LAST
-      );
-    }
-    return window.recaptchaVerifier;
-  };
+ // Setup invisible Recaptcha
+const setupRecaptcha = () => {
+  if (!window.recaptchaVerifier) {
+    window.recaptchaVerifier = new RecaptchaVerifier(
+      "recaptcha-container",   // ✔ element ID FIRST
+      { size: "invisible" },   // ✔ config SECOND
+      auth                     // ✔ auth LAST
+    );
+  }
 
-  // ⭐ SEND OTP
+  return window.recaptchaVerifier;
+};
+
+
+  // Send OTP
   const sendOTP = async () => {
     if (!phone) return alert("Enter mobile number");
+    setLoading(true);
 
     try {
-      const recaptchaVerifier = setupRecaptcha();
+      const recaptcha = setupRecaptcha();
 
-      const result = await signInWithPhoneNumber(
+      const confirmation = await signInWithPhoneNumber(
         auth,
         "+91" + phone,
-        recaptchaVerifier
+        recaptcha
       );
 
-      setConfirmation(result);
+      window.confirmationResult = confirmation;
       alert("OTP sent!");
     } catch (error: any) {
-      console.error("OTP Error:", error);
-      alert(error.message);
+      console.error("OTP Error:", error.code, error.message);
+      alert("Failed to send OTP. Check console.");
     }
+
+    setLoading(false);
   };
 
-  // ⭐ VERIFY OTP
+  // Verify OTP
   const verifyOTP = async () => {
     if (!otp) return alert("Enter OTP");
 
     try {
-      await confirmation.confirm(otp);
+      await window.confirmationResult.confirm(otp);
+
+      // ⭐ STORE LOGIN STATUS HERE
+      localStorage.setItem("loggedIn", "true");
+
       alert("Login successful!");
+
+      // Redirect to categories
       window.location.href = "/categories";
-    } catch (err) {
+    } catch (error) {
       alert("Invalid OTP");
     }
   };
 
   return (
-    <div style={{ padding: 30 }}>
-      <h1 style={{ color: "white" }}>Login with OTP</h1>
+    <div className="text-white pt-32 flex flex-col items-center gap-4">
+
+      <h1 className="text-3xl font-bold mb-4 text-[#16FF6E]">Login with OTP</h1>
 
       <input
         type="tel"
         placeholder="Enter mobile number"
         value={phone}
         onChange={(e) => setPhone(e.target.value)}
-        style={{ padding: 10, width: 250, marginTop: 20 }}
+        className="p-3 rounded text-black w-60"
       />
-
-      <br /> <br />
 
       <button
         onClick={sendOTP}
-        style={{
-          padding: "10px 20px",
-          background: "lime",
-          borderRadius: 5,
-        }}
+        disabled={loading}
+        className="bg-[#16FF6E] text-black px-6 py-2 rounded font-bold"
       >
-        Send OTP
+        {loading ? "Sending..." : "Send OTP"}
       </button>
-
-      <br /> <br />
 
       <input
         type="number"
         placeholder="Enter OTP"
         value={otp}
         onChange={(e) => setOtp(e.target.value)}
-        style={{ padding: 10, width: 250 }}
+        className="p-3 rounded text-black w-60 mt-4"
       />
-
-      <br /> <br />
 
       <button
         onClick={verifyOTP}
-        style={{
-          padding: "10px 20px",
-          background: "cyan",
-          borderRadius: 5,
-        }}
+        className="bg-cyan-400 text-black px-6 py-2 rounded font-bold"
       >
         Verify OTP
       </button>
 
-      {/* REQUIRED FOR CAPTCHA */}
       <div id="recaptcha-container"></div>
     </div>
   );
