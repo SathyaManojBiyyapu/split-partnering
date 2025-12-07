@@ -2,12 +2,16 @@
 
 import { useState } from "react";
 import { auth } from "@/firebase/config";
-import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
+import {
+  RecaptchaVerifier,
+  signInWithPhoneNumber,
+} from "firebase/auth";
 
-// Fix TypeScript: Declare global window property
+// Add this for TypeScript
 declare global {
   interface Window {
     recaptchaVerifier: RecaptchaVerifier | null;
+    confirmationResult: any;
   }
 }
 
@@ -16,54 +20,45 @@ export default function LoginPage() {
   const [otp, setOtp] = useState("");
   const [confirmation, setConfirmation] = useState<any>(null);
 
-  // ✅ CORRECT FIREBASE v9 RECAPTCHA SETUP (AUTH FIRST!)
+  // ⭐ Correct Firebase Recaptcha Setup
   const setupRecaptcha = () => {
-    // Clear previous captcha instance
-    window.recaptchaVerifier = null;
-
-    window.recaptchaVerifier = new RecaptchaVerifier(
-      auth, // 1️⃣ AUTH MUST BE FIRST
-      "recaptcha-container", // 2️⃣ Element ID
-      {
-        size: "invisible",
-        callback: () => {
-          console.log("Recaptcha solved!");
+    if (!window.recaptchaVerifier) {
+      window.recaptchaVerifier = new RecaptchaVerifier(
+        "recaptcha-container",         // <-- element ID FIRST
+        {
+          size: "invisible",
+          callback: () => {
+            console.log("Captcha Solved!");
+          },
         },
-      }
-    );
-
+        auth                              // <-- auth goes LAST
+      );
+    }
     return window.recaptchaVerifier;
   };
 
-  // ✅ SEND OTP
+  // ⭐ SEND OTP
   const sendOTP = async () => {
     if (!phone) return alert("Enter mobile number");
 
     try {
-      const recaptcha = setupRecaptcha();
+      const recaptchaVerifier = setupRecaptcha();
 
       const result = await signInWithPhoneNumber(
         auth,
         "+91" + phone,
-        recaptcha
+        recaptchaVerifier
       );
 
       setConfirmation(result);
       alert("OTP sent!");
     } catch (error: any) {
-      console.error("OTP Error:", error.code, error.message);
-
-      if (error.code === "auth/captcha-check-failed") {
-        alert("Captcha failed. Refresh page.");
-      } else if (error.code === "auth/invalid-app-credential") {
-        alert("Domain not added in Firebase Authorized Domains.");
-      } else {
-        alert("Error sending OTP");
-      }
+      console.error("OTP Error:", error);
+      alert(error.message);
     }
   };
 
-  // ✅ VERIFY OTP
+  // ⭐ VERIFY OTP
   const verifyOTP = async () => {
     if (!otp) return alert("Enter OTP");
 
@@ -88,7 +83,7 @@ export default function LoginPage() {
         style={{ padding: 10, width: 250, marginTop: 20 }}
       />
 
-      <br /><br />
+      <br /> <br />
 
       <button
         onClick={sendOTP}
@@ -101,7 +96,7 @@ export default function LoginPage() {
         Send OTP
       </button>
 
-      <br /><br />
+      <br /> <br />
 
       <input
         type="number"
@@ -111,7 +106,7 @@ export default function LoginPage() {
         style={{ padding: 10, width: 250 }}
       />
 
-      <br /><br />
+      <br /> <br />
 
       <button
         onClick={verifyOTP}
@@ -124,7 +119,7 @@ export default function LoginPage() {
         Verify OTP
       </button>
 
-      {/* Required by Firebase */}
+      {/* REQUIRED FOR CAPTCHA */}
       <div id="recaptcha-container"></div>
     </div>
   );
