@@ -11,12 +11,12 @@ const links = [
 ];
 
 export default function Navbar() {
-  const pathname = usePathname(); // Detects active page
+  const pathname = usePathname();
 
   return (
     <header className="sticky top-0 z-30 border-b border-[#16FF6E]/30 bg-black/70 backdrop-blur">
       <nav className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-        
+
         {/* LOGO */}
         <Link href="/" className="flex items-center gap-2">
           <span className="h-3 w-3 rounded-full bg-[#16FF6E] shadow-[0_0_15px_#16FF6E]" />
@@ -44,10 +44,13 @@ export default function Navbar() {
             );
           })}
 
-          {/* LOGIN BUTTON */}
-          <button className="ml-3 rounded-full border border-[#16FF6E]/40 bg-black/60 px-3 py-1 text-xs font-medium text-[#16FF6E] shadow-[0_0_10px_rgba(22,255,110,0.4)] hover:border-[#16FF6E]">
+          {/* LOGIN BUTTON FIXED */}
+          <Link
+            href="/login"
+            className="ml-3 rounded-full border border-[#16FF6E]/40 bg-black/60 px-3 py-1 text-xs font-medium text-[#16FF6E] shadow-[0_0_10px_rgba(22,255,110,0.4)] hover:border-[#16FF6E]"
+          >
             Login / OTP
-          </button>
+          </Link>
         </div>
 
       </nav>
