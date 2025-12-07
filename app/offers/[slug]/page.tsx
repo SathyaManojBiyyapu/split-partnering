@@ -1,108 +1,96 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import SwipeCard from "../components/SwipeCard";
-import Link from "next/link";
-import { useParams } from "next/navigation";
-
 const offersData: any = {
-  lenskart: [
-    { title: "Buy 1 Get 1 Free Frames", desc: "Split BOGO with a partner!" },
-    { title: "Gold Membership Split", desc: "Share membership benefits." },
-  ],
-  fashion: [
-    { title: "Zara Discount Split", desc: "Team up for seasonal deals." },
-    { title: "H&M Buy 2 Get 1", desc: "Find a partner to split offer." },
-  ],
-  movies: [
-    { title: "BookMyShow 50% Off", desc: "Split movie ticket offers." },
-    { title: "OTT Subscription Split", desc: "Partner to reduce cost." },
-  ],
   gym: [
-    { title: "CultFit Membership", desc: "Find a partner to split." },
-    { title: "GoldGym 2-person Plan", desc: "Save more with splitting." },
+    { title: "Monthly Gym Pass", desc: "Split 1-month pass with another member." },
+    { title: "Trainer Session Pack", desc: "Split 10 personal training sessions." },
+    { title: "Supplements Bundle", desc: "Share bulk protein & vitamins." }
   ],
-  travel: [
-    { title: "Hotel Room Sharing", desc: "Share room fees safely." },
-    { title: "Flight Discount Split", desc: "Partner for promo deals." },
+
+  fashion: [
+    { title: "Seasonal Outfit Bundle", desc: "Split festival clothing combos." },
+    { title: "Streetwear Drop Pack", desc: "Share 2–3 piece fashion combo." },
+    { title: "Accessory Combo", desc: "Split sunglasses/bracelets/belts pack." }
   ],
+
+  movies: [
+    { title: "OTT Shared Access", desc: "Pair up for monthly streaming cost." },
+    { title: "Cinema Seat Pair", desc: "Split 2-seat booking cost." },
+    { title: "Weekend Movie Pack", desc: "Share popcorn + combo deal." }
+  ],
+
+  lenskart: [
+    { title: "Frame Combo Pack", desc: "Split 2-frame offer with a partner." },
+    { title: "Lens Upgrade Bundle", desc: "Share premium lenses upgrade cost." },
+    { title: "Accessory Add-on", desc: "Split cleaning kit & accessories combo." }
+  ],
+
+  "local-travel": [
+    { title: "City Ride Share", desc: "Match with someone on same route." },
+    { title: "Airport Taxi Split", desc: "Share travel cost to/from airport." },
+    { title: "Office Commute Match", desc: "Daily shared rides." }
+  ],
+
   events: [
-    { title: "Concert Ticket Split", desc: "Team up for event passes!" },
-    { title: "Flash Deals", desc: "Partner quickly before sold out." },
+    { title: "Concert Pair Pass", desc: "Split 2-ticket combo." },
+    { title: "Workshop Entry", desc: "Share group learning pack." },
+    { title: "Festival Deal Pack", desc: "Split festive event entry combos." }
   ],
+
+  coupons: [
+    { title: "Unused Coupon Match", desc: "Exchange or match expiring coupons." },
+    { title: "Gift Card Split", desc: "Share partial value gift cards." },
+    { title: "Promo Deal", desc: "Match users for mutual discount deals." }
+  ],
+
+  villas: [
+    { title: "Room Sharing Pack", desc: "Split villa room or night cost." },
+    { title: "Weekend Group Stay", desc: "Find 3–4 people to share villa." },
+    { title: "Holiday Home Deal", desc: "Split long-stay villa bookings." }
+  ],
+
+  books: [
+    { title: "Study Material Bundle", desc: "Split printed or PDF exam materials." },
+    { title: "Test Prep Combo", desc: "Share mock test or exam bundles." },
+    { title: "Notes Exchange", desc: "Match and share notes." }
+  ]
 };
 
-export default function OfferSwipePage(props: any) {
-  // 1) Try params passed from the server (props.params)
-  const rawSlugFromProps = props?.params?.slug;
-
-  // 2) Fallback to client-side useParams hook
-  const paramsHook = useParams();
-  const rawSlugFromHook = paramsHook?.slug;
-
-  // pick whichever is defined, trim and normalize
-  const rawSlug = (rawSlugFromProps ?? rawSlugFromHook ?? "").toString();
-  const slug = rawSlug.trim().toLowerCase();
-
-  // (optional) if slug is still empty, you can parse from pathname as last-resort,
-  // but first we rely on the props/hook combo which is the correct approach.
-
+export default function OffersPage({ params }: any) {
+  const { slug } = params;
   const offers = offersData[slug] || [];
-  const [index, setIndex] = useState(0);
-  const [ready, setReady] = useState(false);
-
-  // small effect to mark ready once slug is resolved (prevents flicker)
-  useEffect(() => {
-    if (slug) setReady(true);
-    // If slug is empty, we still set ready to true so page shows helpful message.
-    else setReady(true);
-  }, [slug]);
-
-  const handleSwipe = () => {
-    setIndex((prev: number) => prev + 1);
-  };
-
-  if (!ready) {
-    return <p className="p-5 text-white">Loading...</p>;
-  }
-
-  // No offers in this category
-  if (!offers.length) {
-    return (
-      <main className="text-center text-white p-10">
-        <h1 className="text-3xl font-bold text-[#16FF6E] mb-3">No offers found 🚫</h1>
-        <p className="text-gray-300 mb-6">This category doesn't have any offers yet.</p>
-
-        <Link href="/categories" className="underline text-[#16FF6E] text-lg">
-          ← Back to Categories
-        </Link>
-      </main>
-    );
-  }
-
-  const currentOffer = offers[index];
-
-  // All offers viewed
-  if (!currentOffer) {
-    return (
-      <main className="text-center text-white p-10">
-        <h1 className="text-3xl font-bold text-[#16FF6E] mb-3">No more offers 🎉</h1>
-        <p className="text-gray-300 mb-6">You viewed all offers in this category.</p>
-
-        <Link href="/categories" className="underline text-[#16FF6E] text-lg">
-          ← Back to Categories
-        </Link>
-      </main>
-    );
-  }
 
   return (
-    <main className="text-center flex flex-col items-center p-10 text-white">
-      <h1 className="text-3xl font-bold text-[#16FF6E] mb-6">
-        Swipe Offers in {slug ? slug[0]?.toUpperCase() + slug.slice(1) : "Category"}
+    <div className="min-h-screen pt-28 px-6 text-white">
+      <h1 className="text-3xl font-bold text-[#16FF6E] mb-8 capitalize">
+        {slug.replace("-", " ")} Offers
       </h1>
 
-      <SwipeCard offer={currentOffer} onSwipe={handleSwipe} />
-    </main>
+      <div className="grid gap-6">
+        {offers.map((offer: any, index: number) => (
+          <div
+            key={index}
+            className="
+              p-6 rounded-xl border border-[#16FF6E]/40 
+              bg-black/30 backdrop-blur-sm 
+              hover:border-[#16FF6E] transition-all shadow
+            "
+          >
+            <h2 className="text-xl font-semibold">{offer.title}</h2>
+            <p className="mt-2 text-gray-300">{offer.desc}</p>
+
+            <button
+              className="
+                mt-4 px-4 py-2 rounded-full border border-[#16FF6E]
+                text-[#16FF6E] hover:bg-[#16FF6E] hover:text-black 
+                transition-all
+              "
+            >
+              Swipe →
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

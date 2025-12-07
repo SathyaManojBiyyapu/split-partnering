@@ -2,7 +2,7 @@
 
 @tailwind base;
 @tailwind components;
-@tailwind utilities;  /* required for @apply */
+@tailwind utilities;
 
 :root {
   --bg: #000000;
@@ -11,7 +11,7 @@
 }
 
 body {
-  @apply min-h-screen bg-black text-white;
-  background: radial-gradient(circle at top, #002500, #000000 70%);
+  @apply min-h-screen text-white;
+  background: radial-gradient(circle at top, #003000, #000000 75%);
   color: var(--neon-soft);
 }
