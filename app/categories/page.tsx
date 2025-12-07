@@ -2,24 +2,32 @@
 
 export default function CategoriesPage() {
   const categories = [
+    { name: "Gym", icon: "🏋️‍♂️", slug: "gym" },
     { name: "Fashion", icon: "👗", slug: "fashion" },
-    { name: "Food", icon: "🍔", slug: "food" },
-    { name: "Travel", icon: "✈️", slug: "travel" },
-    { name: "Electronics", icon: "📱", slug: "electronics" },
-    { name: "Groceries", icon: "🛒", slug: "groceries" },
+    { name: "Movies", icon: "🎬", slug: "movies" },
+    { name: "Lenskart", icon: "👓", slug: "lenskart" },
+    { name: "Local Travel", icon: "🚕", slug: "local-travel" },
+    { name: "Events", icon: "🎟️", slug: "events" },
+    { name: "Coupons", icon: "🏷️", slug: "coupons" },
+    { name: "Villas", icon: "🏡", slug: "villas" },
+    { name: "Books", icon: "📚", slug: "books" },
   ];
 
   return (
     <div className="min-h-screen pt-28 px-6 text-white flex flex-col items-center">
-      <h1 className="text-4xl font-bold text-[#16FF6E] mb-10">
-        Choose a Category
+      <h1 className="text-4xl font-bold text-[#16FF6E] mb-3">
+        Browse Categories 🚀
       </h1>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-lg w-full">
+      <p className="text-lg text-gray-300 mb-10">
+        First 5 partnerings are free.
+      </p>
+
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-xl w-full">
         {categories.map((cat) => (
           <a
             key={cat.slug}
-            href={`/categories/${cat.slug}`}
+            href={`/options/${cat.slug}`}
             className="
               flex flex-col items-center justify-center
               p-6 rounded-xl border border-[#16FF6E]/40
@@ -30,7 +38,7 @@ export default function CategoriesPage() {
             "
           >
             <span className="text-4xl">{cat.icon}</span>
-            <span className="mt-3 text-lg">{cat.name}</span>
+            <span className="mt-3 text-lg text-center">{cat.name}</span>
           </a>
         ))}
       </div>
