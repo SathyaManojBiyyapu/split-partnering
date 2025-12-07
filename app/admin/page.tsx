@@ -1,44 +1,25 @@
 "use client";
 
-import { useAuth } from "@/app/context/AuthContext";
-import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-
-const mockCategories = [
-  { name: "Lenskart", pricePerSwipe: 10, freeSwipes: 5 },
-  { name: "Fashion", pricePerSwipe: 15, freeSwipes: 5 },
-  { name: "Movies", pricePerSwipe: 10, freeSwipes: 5 },
-];
+import { useAuth } from "../context/AuthContext";
 
 export default function AdminPage() {
-  const { user, loading } = useAuth();
-  const router = useRouter();
+  const auth = useAuth();
+  const user = auth?.user;
 
-  useEffect(() => {
-    if (!loading && !user) router.push("/login");
-  }, [user, loading]);
-
-  if (loading) return <p className="p-5 text-white">Checking login...</p>;
+  if (!user) {
+    return (
+      <div className="pt-32 text-center text-white">
+        <h1 className="text-2xl">Access Restricted</h1>
+        <p className="text-gray-400 mt-2">Please log in first.</p>
+      </div>
+    );
+  }
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-10 text-white">
-      <h1 className="mb-2 text-3xl font-bold text-[#16FF6E]">Admin Control Panel 🛠</h1>
-
-      <section className="mb-8 rounded-2xl border border-[#16FF6E]/30 bg-black/80 p-5">
-        <h2 className="mb-3 text-sm font-semibold text-white">Category Pricing</h2>
-
-        <div className="space-y-3 text-xs">
-          {mockCategories.map((cat) => (
-            <div key={cat.name}
-              className="flex items-center justify-between rounded-xl bg-white/5 px-3 py-2"
-            >
-              <span>{cat.name}</span>
-              <span>₹{cat.pricePerSwipe} / swipe</span>
-              <span>Free swipes: {cat.freeSwipes}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-    </main>
+    <div className="pt-32 text-center text-white">
+      <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+      <p className="text-gray-300 mt-4">Welcome, {user.phoneNumber}</p>
+    </div>
   );
 }
