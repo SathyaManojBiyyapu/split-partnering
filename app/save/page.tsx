@@ -1,9 +1,9 @@
-// app/save/page.tsx
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
-export default function SavePage() {
+function SaveContent() {
   const searchParams = useSearchParams();
   const category = searchParams.get("category") || "";
   const option = searchParams.get("option") || "";
@@ -15,7 +15,8 @@ export default function SavePage() {
       </h1>
 
       <p className="text-gray-300 mb-8">
-        You selected: <strong>{option}</strong>
+        You selected <strong>{option}</strong> in{" "}
+        <strong>{category.replace("-", " ")}</strong>
       </p>
 
       <button
@@ -25,5 +26,13 @@ export default function SavePage() {
         Save Selection
       </button>
     </div>
+  );
+}
+
+export default function SavePage() {
+  return (
+    <Suspense fallback={<p className="text-white p-10">Loading...</p>}>
+      <SaveContent />
+    </Suspense>
   );
 }
