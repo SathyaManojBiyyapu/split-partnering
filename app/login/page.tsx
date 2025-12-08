@@ -17,19 +17,17 @@ export default function LoginPage() {
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
 
- // Setup invisible Recaptcha
-const setupRecaptcha = () => {
-  if (!window.recaptchaVerifier) {
-    window.recaptchaVerifier = new RecaptchaVerifier(
-      "recaptcha-container",   // ✔ element ID FIRST
-      { size: "invisible" },   // ✔ config SECOND
-      auth                     // ✔ auth LAST
-    );
-  }
-
-  return window.recaptchaVerifier;
-};
-
+  // Setup invisible Recaptcha
+  const setupRecaptcha = () => {
+    if (!window.recaptchaVerifier) {
+      window.recaptchaVerifier = new RecaptchaVerifier(
+        "recaptcha-container", // element ID
+        { size: "invisible" }, // config
+        auth                   // auth instance
+      );
+    }
+    return window.recaptchaVerifier;
+  };
 
   // Send OTP
   const sendOTP = async () => {
@@ -60,23 +58,28 @@ const setupRecaptcha = () => {
     if (!otp) return alert("Enter OTP");
 
     try {
-      await window.confirmationResult.confirm(otp);
+      const result = await window.confirmationResult.confirm(otp);
+      const user = result.user;
 
-      // ⭐ STORE LOGIN STATUS HERE
+      // Save login status
       localStorage.setItem("loggedIn", "true");
+
+      // Save phone number
+      localStorage.setItem("phone", user.phoneNumber);
 
       alert("Login successful!");
 
       // Redirect to categories
       window.location.href = "/categories";
+
     } catch (error) {
+      console.error("OTP Verify Error:", error);
       alert("Invalid OTP");
     }
   };
 
   return (
     <div className="text-white pt-32 flex flex-col items-center gap-4">
-
       <h1 className="text-3xl font-bold mb-4 text-[#16FF6E]">Login with OTP</h1>
 
       <input

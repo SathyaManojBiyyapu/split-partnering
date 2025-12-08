@@ -1,40 +1,35 @@
 "use client";
 
+import Link from "next/link";
+
+const categories = [
+  { slug: "gym", name: "Gym 🏋️" },
+  { slug: "fashion", name: "Fashion 👗" },
+  { slug: "movies", name: "Movies 🎬" },
+  { slug: "lenskart", name: "Lenskart 👓" },
+  { slug: "local-travel", name: "Local Travel 🚗" },
+  { slug: "events", name: "Events 🎤" },
+  { slug: "coupons", name: "Coupons 🎟️" },
+  { slug: "villas", name: "Villas 🏡" },
+  { slug: "books", name: "Books 📚" },
+];
+
 export default function CategoriesPage() {
-  const categories = [
-    { name: "Gym", icon: "🏋️‍♂️", slug: "gym" },
-    { name: "Fashion", icon: "👗", slug: "fashion" },
-    { name: "Movies", icon: "🎬", slug: "movies" },
-    { name: "Lenskart", icon: "👓", slug: "lenskart" },
-    { name: "Local Travel", icon: "🚕", slug: "local-travel" },
-    { name: "Events", icon: "🎟️", slug: "events" },
-    { name: "Coupons", icon: "🏷️", slug: "coupons" },
-    { name: "Villas", icon: "🏡", slug: "villas" },
-    { name: "Books", icon: "📚", slug: "books" },
-  ];
-
   return (
-    <div className="min-h-screen pt-28 px-6 text-white flex flex-col items-center">
+    <div className="min-h-screen pt-28 px-6 text-white">
+      <h1 className="text-3xl font-bold text-[#16FF6E] mb-6">Browse Categories 🚀</h1>
 
-      <h1 className="text-4xl font-bold text-[#16FF6E] mb-3">
-        Browse Categories 🚀
-      </h1>
-
-      <p className="text-lg text-gray-300 mb-10">First 5 partnerings are free.</p>
-
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-xl w-full">
+      <div className="grid gap-4">
         {categories.map((cat) => (
-          <a
+          <Link
             key={cat.slug}
-            href={`/options?category=${cat.slug}`}
-            className="flex flex-col items-center justify-center p-6 rounded-xl border border-[#16FF6E]/40 bg-black/30 backdrop-blur-sm hover:border-[#16FF6E] hover:bg-black/50 transition-all shadow-[0_0_8px_rgba(22,255,110,0.3)] hover:shadow-[0_0_15px_rgba(22,255,110,0.5)]"
+            href={`/options/${cat.slug}`}
+            className="p-5 rounded-xl border border-[#16FF6E]/40 bg-black/40 hover:bg-black/70 transition"
           >
-            <span className="text-4xl">{cat.icon}</span>
-            <span className="mt-3 text-lg text-center">{cat.name}</span>
-          </a>
+            <h2 className="text-2xl">{cat.name}</h2>
+          </Link>
         ))}
       </div>
-
     </div>
   );
 }

@@ -1,31 +1,43 @@
-import Link from "next/link";
+"use client";
 
 export default function HomePage() {
   return (
-    <main className="flex min-h-[calc(100vh-60px)] flex-col items-center justify-center bg-[radial-gradient(circle_at_top,#062f1a,#000)] px-4 text-white">
-      <div className="text-center">
-        <p className="mb-3 text-xs uppercase tracking-[0.25em] text-[#16FF6E]/80">
-          Match • Split • Save
-        </p>
-        <h1 className="mb-4 text-5xl font-extrabold text-[#16FF6E] drop-shadow-[0_0_30px_#16FF6E]">
-          Welcome 👋
-        </h1>
-        <p className="mx-auto mb-8 max-w-xl text-base text-gray-200">
-          Turn solo offers into shared wins. Pick a category, swipe on a deal,
-          and we&apos;ll find your partner to split the cost.
+    <main className="flex flex-col items-center justify-start min-h-[80vh] pt-16 px-4">
+
+      {/* Title */}
+      <h1 className="text-4xl md:text-5xl font-bold text-[#16FF6E] drop-shadow-lg text-center">
+        Swipe Offers in Fashion
+      </h1>
+
+      {/* Card */}
+      <div className="
+        mt-10 p-8 w-full max-w-md rounded-xl border border-[#16FF6E]/40 
+        bg-black/30 backdrop-blur-md shadow-[0_0_20px_rgba(22,255,110,0.15)]
+        transition-all hover:shadow-[0_0_35px_rgba(22,255,110,0.35)]
+      ">
+        <h2 className="text-2xl font-semibold text-white text-center">
+          Zara Discount Split
+        </h2>
+
+        <p className="mt-3 text-gray-300 text-center">
+          Team up for seasonal deals.
         </p>
 
-        <Link
-          href="/categories"
-          className="rounded-full bg-[#16FF6E] px-8 py-3 text-lg font-semibold text-black shadow-[0_0_25px_#16FF6E] transition hover:scale-105"
-        >
-          Browse Categories 🚀
-        </Link>
-
-        <p className="mt-4 text-xs text-gray-400">
-          First 5 partnerings are <span className="text-[#16FF6E]">free</span>.
-        </p>
+        {/* Swipe Button */}
+        <div className="mt-6 flex justify-center">
+          <button
+            className="px-6 py-2 rounded-full border border-[#16FF6E] text-[#16FF6E]
+            hover:bg-[#16FF6E] hover:text-black transition-all shadow-[0_0_10px_rgba(22,255,110,0.5)]"
+          >
+            Tap to Swipe →
+          </button>
+        </div>
       </div>
+
+      {/* Subtext */}
+      <p className="mt-8 text-gray-400 text-sm text-center">
+        More categories coming soon...
+      </p>
     </main>
   );
 }

@@ -1,83 +1,92 @@
 "use client";
 
-import { Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+const categoryOptions: any = {
+  gym: [
+    { name: "Partner & Save", slug: "pass" },
+    { name: "GNC", slug: "supplements-gnc" },
+    { name: "Herbalife", slug: "supplements-herbalife" },
+    { name: "Muscletech", slug: "supplements-muscletech" },
+    { name: "Optimum Nutrition", slug: "supplements-optimum" },
+    { name: "Big Muscles", slug: "supplements-bigmuscles" },
+  ],
 
-function OptionsContent() {
-  const searchParams = useSearchParams();
-  const category = searchParams.get("category") || "";
+  fashion: [
+    { name: "Peter England", slug: "peter-england" },
+    { name: "Louis Philippe", slug: "louis-philippe" },
+    { name: "Unlimited", slug: "unlimited" },
+    { name: "Trends", slug: "trends" },
+    { name: "Wrogn", slug: "wrogn" },
+    { name: "Wildcraft", slug: "wildcraft" },
+    { name: "Zara", slug: "zara" },
+    { name: "H&M", slug: "hm" },
+    { name: "Nike", slug: "nike" },
+    { name: "Adidas", slug: "adidas" },
+  ],
 
-  const categoryOptions: any = {
-    lenskart: [
-      { name: "Split & Buy", slug: "split" },
-      { name: "Frame Combo", slug: "frame" },
-      { name: "Lens Upgrade", slug: "lens" },
-    ],
-    gym: [
-      { name: "Monthly Pass", slug: "pass" },
-      { name: "Trainer Sessions", slug: "trainer" },
-      { name: "Supplements", slug: "supplements" },
-    ],
-    fashion: [
-      { name: "Outfit Bundle", slug: "bundle" },
-      { name: "Seasonal Wear", slug: "season" },
-      { name: "Accessories", slug: "accessories" },
-    ],
-    movies: [
-      { name: "Cinema Pair", slug: "cinema" },
-      { name: "OTT Sharing", slug: "ott" },
-    ],
-    "local-travel": [
-      { name: "Car Split", slug: "car" },
-      { name: "Bike Split", slug: "bike" },
-      { name: "Cab Share", slug: "cab" },
-    ],
-    events: [
-      { name: "Concert Pass", slug: "concert" },
-      { name: "Workshop Ticket", slug: "workshop" },
-    ],
-    coupons: [
-      { name: "Unused Coupons", slug: "unused" },
-      { name: "Gift Cards", slug: "gift" },
-    ],
-    villas: [
-      { name: "Room Share", slug: "room" },
-      { name: "Weekend Stay", slug: "weekend" },
-    ],
-    books: [
-      { name: "Exam Materials", slug: "material" },
-      { name: "Notes Sharing", slug: "notes" },
-    ],
-  };
+  movies: [
+    { name: "Save Ticket", slug: "save-ticket" },
+    { name: "Save Bulk Tickets", slug: "bulk-ticket" },
+  ],
 
-  const options = categoryOptions[category] || [];
+  lenskart: [
+    { name: "Split & Buy", slug: "split" },
+    { name: "Lens Split", slug: "lens-split" },
+  ],
+
+  "local-travel": [
+    { name: "Car Partner", slug: "car" },
+    { name: "Bike Partner", slug: "bike" },
+  ],
+
+  events: [
+    { name: "Couple Entry", slug: "couple-entry" },
+    { name: "Group & Save", slug: "group-save" },
+  ],
+
+  coupons: [
+    { name: "Best Deals", slug: "best-deals" },
+    { name: "Gift Card", slug: "gift-card" },
+  ],
+
+  villas: [
+    { name: "Group Split & Save", slug: "room" },
+    { name: "Weekend Villa", slug: "weekend" },
+  ],
+
+  books: [
+    { name: "Java Unlock", slug: "java" },
+    { name: "Python Unlock", slug: "python" },
+    { name: "C Unlock", slug: "c" },
+    { name: "DSA Unlock", slug: "dsa" },
+    { name: "OOPS Unlock", slug: "oops" },
+    { name: "CN Unlock", slug: "cn" },
+    { name: "DBMS Unlock", slug: "dbms" },
+    { name: "OS Unlock", slug: "os" },
+    { name: "Previous Papers Unlock", slug: "previous-papers" },
+  ],
+};
+
+export default function OptionsPage({ params }: any) {
+  const { slug } = params;
+  const options = categoryOptions[slug] || [];
 
   return (
     <div className="min-h-screen pt-28 px-6 text-white">
       <h1 className="text-3xl font-bold text-[#16FF6E] mb-6">
-        {category ? category.replace("-", " ").toUpperCase() : "Options"}
+        {slug.replace("-", " ").toUpperCase()}
       </h1>
 
       <div className="grid gap-4">
         {options.map((item: any) => (
           <a
             key={item.slug}
-            href={`/save?category=${category}&option=${item.slug}`}
-            className="p-5 rounded-xl border border-[#16FF6E]/40 bg-black/40 hover:bg-black/70 transition-all"
+            href={`/save/?category=${slug}&option=${item.slug}`}
+            className="p-5 rounded-xl border border-[#16FF6E]/40 bg-black/40 hover:bg-black/70 transition"
           >
             <h2 className="text-xl">{item.name}</h2>
           </a>
         ))}
       </div>
     </div>
-  );
-}
-
-// MUST wrap in Suspense to avoid Vercel build failure
-export default function OptionsPage() {
-  return (
-    <Suspense fallback={<p className="text-white p-10">Loading options...</p>}>
-      <OptionsContent />
-    </Suspense>
   );
 }
