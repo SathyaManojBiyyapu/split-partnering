@@ -1,53 +1,103 @@
 "use client";
 
-export default function Dashboard() {
-  // Dummy data for now — later you can replace with DB
-  const savedPartners = [
-    { name: "Ravi", offer: "Lenskart Gold", status: "Pending" },
-    { name: "Sneha", offer: "Amazon Prime", status: "Matched" },
-    { name: "Aarav", offer: "Cult Fit", status: "Pending" },
-  ];
+import { useEffect, useState } from "react";
+import { db } from "@/firebase/config";
+import { collection, query, where, getDocs } from "firebase/firestore";
+
+export default function DashboardPage() {
+  const [latest, setLatest] = useState<any>(null);
+  const [group, setGroup] = useState<any>(null);
+
+  const phone = typeof window !== "undefined" ? localStorage.getItem("phone") : "";
+
+  useEffect(() => {
+    const fetch = async () => {
+      if (!phone) return;
+
+      const selectionsRef = collection(db, "selections");
+      const q1 = query(selectionsRef, where("phone", "==", phone));
+      const snap1 = await getDocs(q1);
+      if (snap1.empty) return;
+
+      const latestDoc = snap1.docs[snap1.docs.length - 1].data();
+      setLatest(latestDoc);
+
+      // find associated group (waiting/ready/completed)
+      const groupsRef = collection(db, "groups");
+      const q2 = query(
+        groupsRef,
+        where("category", "==", latestDoc.category),
+        where("option", "==", latestDoc.option)
+      );
+
+      const snap2 = await getDocs(q2);
+
+      // find the group that contains this phone (if any)
+      const found = snap2.docs.map((d) => ({ id: d.id, ...d.data() })).find((g: any) => {
+        const members: string[] = g.members || [];
+        return members.includes(phone);
+      });
+
+      if (found) {
+        setGroup(found);
+      } else {
+        // not yet in a group (possible if created later) — find any matching waiting group count
+        if (snap2.empty) {
+          setGroup(null);
+        } else {
+          // choose first match's counts (but user not in it)
+          const first = snap2.docs[0].data();
+          setGroup(first);
+        }
+      }
+    };
+
+    fetch();
+  }, [phone]);
 
   return (
-    <main className="max-w-4xl mx-auto px-4 py-16 text-white">
-      
-      {/* Header Section */}
-      <h1 className="text-3xl font-bold text-[#16FF6E]">My Matches 🤝</h1>
-      <p className="text-gray-300 text-sm mt-1 mb-10">
-        Here are your current partner requests & match status.
-      </p>
+    <div className="pt-32 px-6 text-white">
+      <h1 className="text-3xl font-bold text-[#16FF6E]">My Matches</h1>
 
-      {/* Matches Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        {savedPartners.map((user, i) => (
-          <div
-            key={i}
-            className="bg-black/60 border border-[#16FF6E]/40 p-5 rounded-xl hover:border-[#16FF6E] transition"
-          >
-            <h2 className="text-lg font-semibold text-[#16FF6E]">{user.offer}</h2>
-            <p className="opacity-90 text-sm mt-1">Partner: {user.name}</p>
-            <p
-              className={`mt-2 text-xs font-semibold ${
-                user.status === "Matched"
-                  ? "text-[#16FF6E]"
-                  : "text-yellow-300 animate-pulse"
-              }`}
-            >
-              Status: {user.status}
-            </p>
-          </div>
-        ))}
-      </div>
+      {!latest ? (
+        <p className="text-gray-400 mt-4">No selections saved yet.</p>
+      ) : (
+        <>
+          <p className="mt-4 text-gray-300">
+            Latest selection:{" "}
+            <span className="text-[#16FF6E] font-bold">
+              {latest.category} → {latest.option}
+            </span>
+          </p>
 
-      {/* Explore More Button */}
-      <div className="text-center mt-12">
-        <a
-          href="/categories"
-          className="bg-[#16FF6E] text-black px-6 py-2 rounded-full font-medium shadow-[0_0_20px_#16FF6E] hover:shadow-[0_0_40px_#16FF6E] transition"
-        >
-          Explore More Offers 🚀
-        </a>
-      </div>
-    </main>
+          {!group ? (
+            <p className="text-gray-400 mt-4">No group yet. Waiting for participants.</p>
+          ) : (
+            <div className="mt-6 p-4 bg-black/40 rounded-xl border border-[#16FF6E]/30">
+              <p>
+                <strong>Group Status:</strong>{" "}
+                <span className={group.status === "ready" ? "text-green-400" : "text-yellow-400"}>
+                  {group.status.toUpperCase()}
+                </span>
+              </p>
+
+              <p className="mt-2">
+                <strong>Progress:</strong> {group.membersCount} / {group.requiredSize}
+              </p>
+
+              {group.status === "ready" ? (
+                <p className="text-gray-300 mt-4">
+                  Your group is ready. The admin will contact you privately with next steps.
+                </p>
+              ) : (
+                <p className="text-gray-300 mt-4">
+                  Waiting for {group.requiredSize - group.membersCount} more to complete the group.
+                </p>
+              )}
+            </div>
+          )}
+        </>
+      )}
+    </div>
   );
 }
