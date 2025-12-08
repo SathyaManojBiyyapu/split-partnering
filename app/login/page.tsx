@@ -1,13 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { auth, db } from "@/firebase/config";
-import {
-  RecaptchaVerifier,
-  signInWithPhoneNumber,
-} from "firebase/auth";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { useState, useEffect } from "react";
+import { auth } from "@/firebase/config";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/firebase/config";
 
 declare global {
   interface Window {
@@ -17,36 +13,41 @@ declare global {
 }
 
 export default function LoginPage() {
-  const router = useRouter();
-
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
-  const [step, setStep] = useState<"phone" | "otp">("phone");
+  const [loading, setLoading] = useState(false);
 
-  // ⭐ Correct Firebase v10 Recaptcha Setup
-  const setupRecaptcha = async () => {
-    if (typeof window === "undefined") return;
+  /* -----------------------------------------------------------
+     1️⃣ INIT INVISIBLE RECAPTCHA (CORRECT SIGNATURE)
+  ----------------------------------------------------------- */
+  useEffect(() => {
+    const loadRecaptcha = async () => {
+      if (typeof window === "undefined") return;
+      if (window.recaptchaVerifier) return; // avoid duplicate
 
-    if (!window.recaptchaVerifier) {
+      const { RecaptchaVerifier } = await import("firebase/auth");
+
+      // ✅ Correct RecaptchaVerifier signature for your version
       window.recaptchaVerifier = new RecaptchaVerifier(
-        auth,
-        "recaptcha-container",
-        { size: "invisible" }
+        auth,                            // FIRST ARG ⇒ auth
+        "recaptcha-container",           // SECOND ARG ⇒ HTML ID
+        { size: "invisible" }            // THIRD ARG ⇒ config
       );
-    }
+    };
 
-    await window.recaptchaVerifier.render(); // REQUIRED
-  };
+    loadRecaptcha();
+  }, []);
 
-  // ⭐ Send OTP
+  /* -----------------------------------------------------------
+     2️⃣ SEND OTP  (dynamic import)
+  ----------------------------------------------------------- */
   const sendOTP = async () => {
-    if (phone.length < 10) {
-      alert("Enter a valid number");
-      return;
-    }
+    if (!phone) return alert("Enter mobile number");
+    setLoading(true);
 
     try {
-      await setupRecaptcha();
+      const { signInWithPhoneNumber } = await import("firebase/auth");
+
       const fullPhone = "+91" + phone;
 
       const confirmation = await signInWithPhoneNumber(
@@ -56,77 +57,87 @@ export default function LoginPage() {
       );
 
       window.confirmationResult = confirmation;
-      setStep("otp");
-      alert("OTP Sent!");
+      alert("OTP sent!");
     } catch (err: any) {
       console.error("OTP Error:", err);
-      alert("Failed: " + err.message);
+      alert(err.message || "Failed to send OTP.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  // ⭐ Verify OTP
+  /* -----------------------------------------------------------
+     3️⃣ VERIFY OTP
+  ----------------------------------------------------------- */
   const verifyOTP = async () => {
+    if (!otp) return alert("Enter OTP");
+
     try {
       const result = await window.confirmationResult.confirm(otp);
       const user = result.user;
+      const phoneNumber = user.phoneNumber!;
 
-      await setDoc(
-        doc(db, "users", user.phoneNumber),
-        {
-          phone: user.phoneNumber,
-          createdAt: serverTimestamp(),
-        },
-        { merge: true }
-      );
+      localStorage.setItem("loggedIn", "true");
+      localStorage.setItem("phone", phoneNumber);
 
-      alert("Login Successful!");
-      router.push("/profile");
-    } catch (err: any) {
+      // Check if profile exists
+      const ref = doc(db, "users", phoneNumber);
+      const snap = await getDoc(ref);
+
+      if (!snap.exists()) {
+        alert("Welcome! Please complete your profile.");
+        window.location.href = "/profile";
+        return;
+      }
+
+      alert("Login successful!");
+      window.location.href = "/categories";
+    } catch (err) {
+      console.error("Verify Error:", err);
       alert("Invalid OTP");
-      console.error(err);
     }
   };
 
   return (
-    <div className="pt-32 px-6 text-white max-w-md mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Login</h1>
+    <div className="pt-32 px-6 text-white flex flex-col items-center gap-4">
+      <h1 className="text-3xl font-bold text-[#16FF6E]">Login with OTP</h1>
 
-      {step === "phone" && (
-        <>
-          <input
-            placeholder="Enter phone number"
-            className="p-3 w-full rounded bg-white text-black"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-          />
+      {/* PHONE INPUT */}
+      <input
+        type="tel"
+        placeholder="Enter mobile number"
+        value={phone}
+        onChange={(e) => setPhone(e.target.value.replace(/\s/g, ""))}
+        className="p-3 rounded text-black w-64"
+      />
 
-          <button
-            onClick={sendOTP}
-            className="mt-4 px-6 py-3 bg-[#16FF6E] text-black rounded font-bold"
-          >
-            Send OTP
-          </button>
-        </>
-      )}
+      {/* SEND OTP */}
+      <button
+        onClick={sendOTP}
+        disabled={loading}
+        className="px-6 py-2 bg-[#16FF6E] text-black rounded font-bold"
+      >
+        {loading ? "Sending…" : "Send OTP"}
+      </button>
 
-      {step === "otp" && (
-        <>
-          <input
-            placeholder="Enter OTP"
-            className="p-3 w-full rounded bg-white text-black"
-            value={otp}
-            onChange={(e) => setOtp(e.target.value)}
-          />
+      {/* OTP INPUT */}
+      <input
+        type="number"
+        placeholder="Enter OTP"
+        value={otp}
+        onChange={(e) => setOtp(e.target.value)}
+        className="p-3 rounded text-black w-64 mt-2"
+      />
 
-          <button
-            onClick={verifyOTP}
-            className="mt-4 px-6 py-3 bg-[#16FF6E] text-black rounded font-bold"
-          >
-            Verify OTP
-          </button>
-        </>
-      )}
+      {/* VERIFY */}
+      <button
+        onClick={verifyOTP}
+        className="px-6 py-2 bg-cyan-400 text-black rounded font-bold"
+      >
+        Verify OTP
+      </button>
 
+      {/* REQUIRED RECAPTCHA ELEMENT */}
       <div id="recaptcha-container"></div>
     </div>
   );
