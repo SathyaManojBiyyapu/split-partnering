@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { db } from "@/firebase/config";
 import {
@@ -14,12 +14,10 @@ import {
   updateDoc,
   arrayUnion,
   setDoc,
-  increment,
   getDoc,
 } from "firebase/firestore";
 
 const GROUP_SIZE: any = {
-  // same mapping as dashboard - change as you like
   split: 2,
   frame: 2,
   lens: 2,
@@ -51,7 +49,7 @@ function getRequiredSize(option: string) {
 async function createOrJoinGroup(category: string, option: string, phone: string) {
   const groupsRef = collection(db, "groups");
 
-  // 1) find a waiting group with same category+option and not full
+  // find waiting groups
   const q = query(
     groupsRef,
     where("category", "==", category),
@@ -60,30 +58,28 @@ async function createOrJoinGroup(category: string, option: string, phone: string
   );
 
   const snap = await getDocs(q);
-  // try to find a group that has space
+
   for (const gdoc of snap.docs) {
     const g = gdoc.data();
     const members: string[] = g.members || [];
     const required = g.requiredSize || getRequiredSize(option);
 
-    // prevent duplicate entry
+    // already in group
     if (members.includes(phone)) {
       return { status: "joined", groupId: gdoc.id, membersCount: members.length };
     }
 
     if (members.length < required) {
-      // add member
       const gRef = doc(db, "groups", gdoc.id);
       await updateDoc(gRef, {
         members: arrayUnion(phone),
         membersCount: (members.length || 0) + 1,
       });
 
-      // re-fetch to check fullness
       const updated = (await getDoc(gRef)).data() as any;
       const updatedMembers = updated.members || [];
+
       if ((updatedMembers.length || 0) >= required) {
-        // mark ready
         await updateDoc(gRef, { status: "ready", readyAt: serverTimestamp() });
       }
 
@@ -91,10 +87,10 @@ async function createOrJoinGroup(category: string, option: string, phone: string
     }
   }
 
-  // 2) if none found -> create new group
-  const newGroupRef = doc(groupsRef); // auto id
+  // create new group
+  const newGroupRef = doc(groupsRef);
   const requiredSize = getRequiredSize(option);
-  const payload = {
+  await setDoc(newGroupRef, {
     category,
     option,
     members: [phone],
@@ -102,9 +98,7 @@ async function createOrJoinGroup(category: string, option: string, phone: string
     requiredSize,
     status: requiredSize === 1 ? "ready" : "waiting",
     createdAt: serverTimestamp(),
-  };
-
-  await setDoc(newGroupRef, payload);
+  });
 
   return { status: "created", groupId: newGroupRef.id, membersCount: 1 };
 }
@@ -114,32 +108,52 @@ function SaveContent() {
   const category = searchParams.get("category") || "";
   const option = searchParams.get("option") || "";
 
-  // Get user phone (you set this in OTP page)
-  const phone = typeof window !== "undefined" ? localStorage.getItem("phone") || "unknown" : "unknown";
+  const phone =
+    typeof window !== "undefined" ? localStorage.getItem("phone") || "unknown" : "unknown";
+
+  const [userName, setUserName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (!phone) return;
+      try {
+        const userRef = doc(db, "users", phone);
+        const snap = await getDoc(userRef);
+        if (snap.exists()) {
+          const d = snap.data() as any;
+          setUserName(d.name || null);
+        }
+      } catch (err) {
+        console.error("Load user profile error:", err);
+      }
+    };
+    loadProfile();
+  }, [phone]);
 
   const saveSelection = async () => {
+    if (!phone || phone === "unknown") return alert("Please login first.");
+
     try {
-      // 1) save selection
+      // save selection with userName if exists
       await addDoc(collection(db, "selections"), {
         phone,
+        userName: userName || null,
         category,
         option,
         createdAt: serverTimestamp(),
       });
 
-      // 2) create or join group
+      // create/join group
       const res = await createOrJoinGroup(category, option, phone);
 
-      // 3) inform user (private)
-      if (res.status === "joined" || res.status === "created") {
-        // show friendly message but don't reveal phones
-        alert(`Saved successfully! Group status: ${res.status}. Members: ${res.membersCount}/${getRequiredSize(option)}`);
-        // redirect to dashboard to view status
-        window.location.href = "/dashboard";
-      } else {
-        alert("Saved successfully!");
-        window.location.href = "/dashboard";
-      }
+      // use partner wording
+      alert(
+        `Saved! Partner status: ${res.status}. Partners: ${res.membersCount}/${getRequiredSize(
+          option
+        )}`
+      );
+
+      window.location.href = "/dashboard";
     } catch (error) {
       console.error("Save Error:", error);
       alert("Saving failed. Try again.");
@@ -160,7 +174,7 @@ function SaveContent() {
         onClick={saveSelection}
         className="px-6 py-3 bg-[#16FF6E] text-black rounded-xl hover:bg-white transition-all font-bold"
       >
-        Save Selection
+        Save Partner
       </button>
     </div>
   );
