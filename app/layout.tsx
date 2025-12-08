@@ -1,31 +1,35 @@
 "use client";
 
-import { useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
-import Navbar from "./components/Navbar";
 import "./globals.css";
+import Navbar from "./components/Navbar";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import { useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
 
-export default function RootLayout({ children }: any) {
-  const pathname = usePathname();
+function AuthGuard({ children }: any) {
+  const { user, loading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
-    const loggedIn = localStorage.getItem("loggedIn");
+    if (loading) return;
 
-    // Allow login page always
     if (pathname === "/login") return;
 
-    // If NOT logged in → redirect to login
-    if (!loggedIn) {
-      router.push("/login");
-    }
-  }, [pathname]);
+    if (!user) router.push("/login");
+  }, [user, loading, pathname]);
 
+  return children;
+}
+
+export default function RootLayout({ children }: any) {
   return (
     <html lang="en">
       <body className="bg-black text-white">
-        <Navbar />
-        {children}
+        <AuthProvider>
+          <Navbar />
+          <AuthGuard>{children}</AuthGuard>
+        </AuthProvider>
       </body>
     </html>
   );

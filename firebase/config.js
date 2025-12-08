@@ -1,22 +1,20 @@
-// firebase/config.js
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
-// Your Firebase credentials
 const firebaseConfig = {
-  apiKey: "AIzaSyBx11nyHmS-xw1jyeDEX_Qxsd4cGhJqk18",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: "splitpartnering.firebaseapp.com",
   projectId: "splitpartnering",
-  storageBucket: "splitpartnering.appspot.com",   // ✅ FIXED
+  storageBucket: "splitpartnering.appspot.com",
   messagingSenderId: "656417651216",
-  appId: "1:656417651216:web:cd20cd09120190171ea895",
-  measurementId: "G-Z9LQZ49T2B",
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase App
-const app = initializeApp(firebaseConfig);
+console.log("API KEY:", process.env.NEXT_PUBLIC_FIREBASE_API_KEY);
+console.log("APP ID:", process.env.NEXT_PUBLIC_FIREBASE_APP_ID);
 
-// Export Auth + Firestore instances
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
+
 export const auth = getAuth(app);
 export const db = getFirestore(app);
