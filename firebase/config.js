@@ -8,7 +8,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyBx11nyHmS-xw1jyeDEX_Qxsd4cGhJqk18",
   authDomain: "splitpartnering.firebaseapp.com",
   projectId: "splitpartnering",
-  storageBucket: "splitpartnering.firebasestorage.app",
+  storageBucket: "splitpartnering.appspot.com",   // ✅ FIXED
   messagingSenderId: "656417651216",
   appId: "1:656417651216:web:cd20cd09120190171ea895",
   measurementId: "G-Z9LQZ49T2B",

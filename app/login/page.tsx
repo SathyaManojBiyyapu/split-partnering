@@ -6,7 +6,7 @@ import { auth } from "@/firebase/config";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/firebase/config";
 
-// Extend window types
+// Extend window for TS
 declare global {
   interface Window {
     recaptchaVerifier: RecaptchaVerifier | null;
@@ -19,21 +19,20 @@ export default function LoginPage() {
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Setup Recaptcha (auth MUST be last param signature variant used below)
+  // Initialize invisible Recaptcha ONCE
   useEffect(() => {
     if (typeof window === "undefined") return;
+
     if (!window.recaptchaVerifier) {
-      // Use RecaptchaVerifier(elemId, config, auth) variant for compatibility
-      // Some firebase versions accept (auth, elementOrId, config) — we use element-first to match runtime earlier working code
-      // We'll use RecaptchaVerifier with element id first (string), config second, auth third
       window.recaptchaVerifier = new RecaptchaVerifier(
-        "recaptcha-container",
-        { size: "invisible" },
-        auth
+        "recaptcha-container",       // element ID
+        { size: "invisible" },       // config
+        auth                         // auth (last parameter)
       );
     }
   }, []);
 
+  // Ensure Recaptcha exists
   const setupRecaptcha = () => {
     if (!window.recaptchaVerifier) {
       window.recaptchaVerifier = new RecaptchaVerifier(
@@ -45,56 +44,71 @@ export default function LoginPage() {
     return window.recaptchaVerifier;
   };
 
+  // Send OTP
   const sendOTP = async () => {
     if (!phone) return alert("Enter mobile number");
+
     setLoading(true);
+
     try {
       const recaptcha = setupRecaptcha();
-      const confirmation = await signInWithPhoneNumber(auth, "+91" + phone, recaptcha);
+
+      const confirmation = await signInWithPhoneNumber(
+        auth,
+        "+91" + phone,
+        recaptcha
+      );
+
       window.confirmationResult = confirmation;
+
       alert("OTP sent!");
     } catch (error: any) {
-      console.error("OTP Error:", error?.code ?? error, error?.message ?? "");
-      alert("Failed to send OTP. Check console.");
-      // If captcha failed
-      if (error?.code === "auth/captcha-check-failed" || error?.message?.includes("Hostname match not found")) {
-        alert("reCAPTCHA error — ensure your domain is authorized in Firebase Auth.");
+      console.error("OTP Error:", error);
+
+      if (
+        error?.code === "auth/captcha-check-failed" ||
+        error?.message?.includes("Hostname match not found")
+      ) {
+        alert(
+          "reCAPTCHA failed. Add your Vercel domain in Firebase → Authentication → Authorized Domains."
+        );
+      } else {
+        alert("Failed to send OTP.");
       }
     } finally {
       setLoading(false);
     }
   };
 
-  // Verify OTP and redirect to profile if new user
+  // Verify OTP
   const verifyOTP = async () => {
     if (!otp) return alert("Enter OTP");
+
     try {
       const result = await window.confirmationResult.confirm(otp);
       const user = result.user;
       const phoneNumber = user.phoneNumber;
-      // Save login status
+
+      // Save login session
       localStorage.setItem("loggedIn", "true");
       localStorage.setItem("phone", phoneNumber ?? "");
 
-      // Check if profile exists
-      try {
-        if (phoneNumber) {
-          const userRef = doc(db, "users", phoneNumber);
-          const snap = await getDoc(userRef);
-          if (!snap.exists()) {
-            alert("Welcome! Please complete your profile.");
-            window.location.href = "/profile";
-            return;
-          }
+      // Redirect new users to profile setup
+      if (phoneNumber) {
+        const ref = doc(db, "users", phoneNumber);
+        const snap = await getDoc(ref);
+
+        if (!snap.exists()) {
+          alert("Welcome! Please complete your profile.");
+          window.location.href = "/profile";
+          return;
         }
-      } catch (err) {
-        console.error("Error checking profile:", err);
       }
 
       alert("Login successful!");
       window.location.href = "/categories";
     } catch (err) {
-      console.error("OTP Verify Error:", err);
+      console.error("Verify Error:", err);
       alert("Invalid OTP");
     }
   };
@@ -134,6 +148,7 @@ export default function LoginPage() {
         Verify OTP
       </button>
 
+      {/* Required for invisible reCAPTCHA */}
       <div id="recaptcha-container"></div>
     </div>
   );
