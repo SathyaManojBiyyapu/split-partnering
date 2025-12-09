@@ -1,102 +1,117 @@
 "use client";
 
-const categoryOptions: Record<string, { name: string; slug: string }[]> = {
+import Link from "next/link";
+import { useParams } from "next/navigation";
+
+const categoryOptions: Record<string, { name: string; slug: string; description: string; emoji: string }[]> = {
   gym: [
-    { name: "Partner & Save", slug: "split" },
-    { name: "GNC", slug: "supplements-gnc" },
-    { name: "Herbalife", slug: "supplements-herbalife" },
-    { name: "Muscletech", slug: "supplements-muscletech" },
-    { name: "Optimum Nutrition", slug: "supplements-optimum" },
-    { name: "Big Muscles", slug: "supplements-bigmuscles" },
+    { name: "Split Membership", slug: "split", description: "Share a gym membership with a partner", emoji: "💪" },
+    { name: "Day Pass", slug: "pass", description: "Split a day pass", emoji: "🎫" },
+    { name: "Supplements", slug: "supplements", description: "Split supplement costs (3 partners)", emoji: "💊" },
   ],
-
   fashion: [
-    { name: "Peter England", slug: "peter-england" },
-    { name: "Louis Philippe", slug: "louis-philippe" },
-    { name: "Unlimited", slug: "unlimited" },
-    { name: "Trends", slug: "trends" },
-    { name: "Wrogn", slug: "wrogn" },
-    { name: "Wildcraft", slug: "wildcraft" },
-    { name: "Zara", slug: "zara" },
-    { name: "H&M", slug: "hm" },
-    { name: "Nike", slug: "nike" },
-    { name: "Adidas", slug: "adidas" },
+    { name: "Peter England", slug: "peter-england", description: "Share Peter England deals", emoji: "👔" },
+    { name: "Louis Philippe", slug: "louis-philippe", description: "Split Louis Philippe purchases", emoji: "👔" },
+    { name: "Unlimited", slug: "unlimited", description: "Share Unlimited fashion deals", emoji: "👗" },
+    { name: "Trends", slug: "trends", description: "Split Trends fashion items", emoji: "👕" },
+    { name: "Wrogn", slug: "wrogn", description: "Share Wrogn deals", emoji: "👕" },
+    { name: "Wildcraft", slug: "wildcraft", description: "Split Wildcraft purchases", emoji: "🎒" },
+    { name: "Zara", slug: "zara", description: "Share Zara fashion deals", emoji: "👗" },
+    { name: "H&M", slug: "hm", description: "Split H&M purchases", emoji: "👕" },
+    { name: "Nike", slug: "nike", description: "Share Nike deals", emoji: "👟" },
+    { name: "Adidas", slug: "adidas", description: "Split Adidas purchases", emoji: "👟" },
   ],
-
   movies: [
-    { name: "Save Ticket", slug: "save-ticket" },
-    { name: "Save Bulk Tickets", slug: "bulk-ticket" },
+    { name: "Save Ticket", slug: "save-ticket", description: "Split movie tickets", emoji: "🎬" },
+    { name: "Bulk Ticket", slug: "bulk-ticket", description: "Share bulk ticket deals", emoji: "🎫" },
   ],
-
   lenskart: [
-    { name: "Split & Buy", slug: "split" },
-    { name: "Lens Split", slug: "lens-split" },
+    { name: "Split Buy", slug: "splitbuy", description: "Share eyewear purchases", emoji: "👓" },
+    { name: "Lens Split", slug: "lens-split", description: "Split lens costs", emoji: "🔍" },
   ],
-
   "local-travel": [
-    { name: "Car Partner", slug: "car" },
-    { name: "Bike Partner", slug: "bike" },
+    { name: "Car Rental", slug: "car", description: "Share car rental (4 partners)", emoji: "🚗" },
+    { name: "Bike Rental", slug: "bike", description: "Split bike rental", emoji: "🏍️" },
   ],
-
   events: [
-    { name: "Couple Entry", slug: "couple-entry" },
-    { name: "Group & Save", slug: "group-save" },
+    { name: "Couple Entry", slug: "couple-entry", description: "Split couple entry tickets", emoji: "💑" },
+    { name: "Group Save", slug: "group-save", description: "Share group event tickets (4 partners)", emoji: "👥" },
   ],
-
   coupons: [
-    { name: "Best Deals", slug: "best-deals" },
-    { name: "Gift Card", slug: "gift-card" },
+    { name: "Best Deals", slug: "best-deals", description: "Share best coupon deals", emoji: "🎟️" },
+    { name: "Gift Card", slug: "gift-card", description: "Split gift card purchases", emoji: "🎁" },
   ],
-
   villas: [
-    { name: "Group, Split & Save", slug: "room" },
-    { name: "Weekend Villa", slug: "weekend" },
+    { name: "Room Booking", slug: "room", description: "Share villa room (6 partners)", emoji: "🏡" },
+    { name: "Weekend Stay", slug: "weekend", description: "Split weekend villa stay (4 partners)", emoji: "🌴" },
   ],
-
   books: [
-    { name: "Java Unlock", slug: "java" },
-    { name: "Python Unlock", slug: "python" },
-    { name: "C Unlock", slug: "c" },
-    { name: "DSA Unlock", slug: "dsa" },
-    { name: "OOPS Unlock", slug: "oops" },
-    { name: "CN Unlock", slug: "cn" },
-    { name: "DBMS Unlock", slug: "dbms" },
-    { name: "OS Unlock", slug: "os" },
-    { name: "Previous Papers", slug: "previous-papers" },
+    { name: "Java", slug: "java", description: "Share Java study materials", emoji: "📚" },
+    { name: "Python", slug: "python", description: "Split Python books", emoji: "🐍" },
+    { name: "C Programming", slug: "c", description: "Share C programming books", emoji: "📖" },
+    { name: "DSA", slug: "dsa", description: "Split Data Structures books", emoji: "📊" },
+    { name: "OOPs", slug: "oops", description: "Share Object-Oriented Programming books", emoji: "🔷" },
+    { name: "Computer Networks", slug: "cn", description: "Split CN study materials", emoji: "🌐" },
+    { name: "DBMS", slug: "dbms", description: "Share Database Management books", emoji: "🗄️" },
+    { name: "Operating Systems", slug: "os", description: "Split OS study materials", emoji: "💻" },
+    { name: "Previous Papers", slug: "previous-papers", description: "Share previous exam papers", emoji: "📝" },
   ],
 };
 
-export default function OptionsPage({ params }: any) {
-  const slug: string = params?.slug || "";
+const categoryNames: Record<string, string> = {
+  gym: "Gym",
+  fashion: "Fashion",
+  movies: "Movies",
+  lenskart: "Lenskart",
+  "local-travel": "Local Travel",
+  events: "Events",
+  coupons: "Coupons",
+  villas: "Villas",
+  books: "Books",
+};
 
-  // Load the sub-options
+export default function OptionsPage() {
+  const params = useParams();
+  const slug = params?.slug as string;
   const options = categoryOptions[slug] || [];
+  const categoryName = categoryNames[slug] || slug.replace("-", " ");
 
-  // Title for the page
-  const title =
-    categoryOptions[slug]
-      ? slug.replace(/-/g, " ").toUpperCase()
-      : "CATEGORY NOT FOUND";
+  if (!options.length) {
+    return (
+      <div className="min-h-screen pt-32 px-6 text-white text-center">
+        <h1 className="text-3xl font-bold text-[#16FF6E] mb-4">Category Not Found</h1>
+        <p className="text-gray-400 mb-6">This category doesn't have any options available.</p>
+        <Link href="/categories" className="text-[#16FF6E] underline">
+          ← Back to Categories
+        </Link>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen pt-28 px-6 text-white">
-      <h1 className="text-3xl font-bold mb-6 text-[#16FF6E]">{title}</h1>
+    <div className="min-h-screen pt-32 px-6 text-white">
+      <h1 className="text-3xl font-bold text-[#16FF6E] mb-2">{categoryName} Options</h1>
+      <p className="text-gray-400 mb-8">Choose an option to find your partner</p>
 
-      {options.length === 0 ? (
-        <p className="text-gray-400 mt-10">No options available.</p>
-      ) : (
-        <div className="grid gap-4">
-          {options.map((item) => (
-            <a
-              key={item.slug}
-              href={`/save/?category=${slug}&option=${item.slug}`}
-              className="p-5 rounded-xl border border-[#16FF6E]/40 bg-black/40 hover:bg-black/70 transition-all"
-            >
-              <h2 className="text-xl">{item.name}</h2>
-            </a>
-          ))}
-        </div>
-      )}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+        {options.map((option) => (
+          <Link
+            key={option.slug}
+            href={`/save?category=${slug}&option=${option.slug}`}
+            className="p-6 rounded-xl border border-[#16FF6E]/40 bg-black/40 hover:bg-black/70 hover:border-[#16FF6E] transition-all shadow-lg"
+          >
+            <div className="text-4xl mb-3">{option.emoji}</div>
+            <h2 className="text-xl font-semibold text-[#16FF6E] mb-2">{option.name}</h2>
+            <p className="text-sm text-gray-300">{option.description}</p>
+          </Link>
+        ))}
+      </div>
+
+      <div className="mt-10 text-center">
+        <Link href="/categories" className="text-[#16FF6E] underline text-sm">
+          ← Back to Categories
+        </Link>
+      </div>
     </div>
   );
 }
