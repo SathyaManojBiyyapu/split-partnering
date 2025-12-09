@@ -56,6 +56,7 @@ export default function DashboardPage() {
           setLatestSelection(null);
         } else {
           const lastDoc = snap.docs[snap.docs.length - 1].data() as DocumentData;
+
           setLatestSelection({
             category: lastDoc.category,
             option: lastDoc.option,
@@ -116,7 +117,7 @@ export default function DashboardPage() {
   }, [latestSelection, phone]);
 
   /* -----------------------------------------
-     UI STATES
+     UI: USER NOT LOGGED IN
   ------------------------------------------*/
   if (!phone) {
     return (
@@ -129,6 +130,9 @@ export default function DashboardPage() {
     );
   }
 
+  /* -----------------------------------------
+     UI: LOADING
+  ------------------------------------------*/
   if (loading) {
     return (
       <div className="pt-32 px-6 text-white">
@@ -139,19 +143,20 @@ export default function DashboardPage() {
   }
 
   /* -----------------------------------------
-     MAIN DASHBOARD UI
+     UI: MAIN DASHBOARD
   ------------------------------------------*/
   return (
     <div className="pt-32 px-6 text-white">
       <h1 className="text-3xl font-bold text-[#16FF6E]">My Partners</h1>
 
+      {/* USER HAS NO SAVED SELECTION */}
       {!latestSelection ? (
         <p className="text-gray-400 mt-4">
           You have not saved any partner yet. Go to Categories and start.
         </p>
       ) : (
         <>
-          {/* Latest Selection */}
+          {/* LATEST SELECTION */}
           <p className="text-gray-300 mt-4">
             Latest selection:{" "}
             <span className="text-[#16FF6E] font-bold">
@@ -160,7 +165,7 @@ export default function DashboardPage() {
             </span>
           </p>
 
-          {/* No group yet */}
+          {/* NO GROUP YET */}
           {!group ? (
             <p className="text-gray-400 mt-6">
               Waiting for partner group to be created…
@@ -168,7 +173,7 @@ export default function DashboardPage() {
           ) : (
             <div className="mt-6 p-4 bg-black/40 rounded-xl border border-[#16FF6E]/30 max-w-xl">
 
-              {/* Status */}
+              {/* STATUS */}
               <p>
                 <strong>Status:</strong>{" "}
                 <span
@@ -188,7 +193,7 @@ export default function DashboardPage() {
                 </span>
               </p>
 
-              {/* Progress */}
+              {/* PROGRESS */}
               <p className="mt-2">
                 <strong>Progress:</strong>{" "}
                 <span className="text-[#16FF6E] font-bold">
@@ -196,7 +201,7 @@ export default function DashboardPage() {
                 </span>
               </p>
 
-              {/* Status message */}
+              {/* STATUS MESSAGE */}
               {group.status === "ready" ? (
                 <p className="text-gray-300 mt-4">
                   Your partner group is ready. Admin will contact you soon.

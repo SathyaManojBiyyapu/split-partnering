@@ -21,9 +21,9 @@ export default function LoginPage() {
   const setupRecaptcha = () => {
     if (!window.recaptchaVerifier) {
       window.recaptchaVerifier = new RecaptchaVerifier(
-        auth,                    // Auth first
-        "recaptcha-container",   // Element ID second
-        { size: "invisible" }    // Config third
+        auth, // Auth first
+        "recaptcha-container", // Element ID second
+        { size: "invisible" } // Config third
       );
     }
     return window.recaptchaVerifier;
@@ -66,7 +66,7 @@ export default function LoginPage() {
 
       alert("Login Successful!");
 
-      // Redirect to Profile
+      // Redirect to Profile (then user can go Categories)
       window.location.href = "/profile";
     } catch (error) {
       alert("Invalid OTP.");

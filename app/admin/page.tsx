@@ -13,7 +13,6 @@ import {
   getDoc,
 } from "firebase/firestore";
 
-// --- ADMIN CREDENTIALS ---
 const ADMIN_USERNAME = "admin";
 const ADMIN_PASSWORD = "Hari@2307";
 
@@ -24,14 +23,12 @@ export default function AdminPage() {
   const [groups, setGroups] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // AUTO LOGIN IF ALREADY LOGGED BEFORE
   useEffect(() => {
     if (localStorage.getItem("isAdmin") === "true") {
       setAuthorized(true);
     }
   }, []);
 
-  // REAL-TIME GROUP LISTENER
   useEffect(() => {
     if (!authorized) return;
 
@@ -45,9 +42,7 @@ export default function AdminPage() {
       for (const g of snap.docs) {
         const data = g.data();
 
-        // Fetch member user details
-        let membersDetailed: any[] = [];
-
+        const membersDetailed: any[] = [];
         for (const phone of data.members || []) {
           const userRef = doc(db, "users", phone);
           const userSnap = await getDoc(userRef);
@@ -68,82 +63,66 @@ export default function AdminPage() {
     return () => unsubscribe();
   }, [authorized]);
 
-  // --- LOGIN ---
   const loginAdmin = (e: any) => {
     e.preventDefault();
-
     if (usernameInput === ADMIN_USERNAME && passwordInput === ADMIN_PASSWORD) {
-      setAuthorized(true);
       localStorage.setItem("isAdmin", "true");
+      setAuthorized(true);
     } else {
       alert("❌ Wrong username or password");
     }
   };
 
-  // --- MARK COMPLETED ---
-  const markCompleted = async (groupId: string) => {
-    await updateDoc(doc(db, "groups", groupId), { status: "completed" });
+  const markCompleted = async (id: string) => {
+    await updateDoc(doc(db, "groups", id), { status: "completed" });
     alert("✔ Group marked completed");
   };
 
-  // --- DELETE GROUP ---
-  const deleteGroup = async (groupId: string) => {
-    if (!confirm("Delete this partner group?")) return;
-    await deleteDoc(doc(db, "groups", groupId));
-    alert("❌ Group deleted");
+  const deleteGroup = async (id: string) => {
+    if (!confirm("Delete this group?")) return;
+    await deleteDoc(doc(db, "groups", id));
+    alert("❌ Deleted");
   };
 
-  // --- EXPORT CSV ---
-  const exportCSV = (group: any) => {
-    const csv = (group.members || []).join(",");
+  const exportCSV = (g: any) => {
+    const csv = (g.members || []).join(",");
     const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    window.open(url);
+    window.open(URL.createObjectURL(blob));
   };
 
-  // --- CONTACT ALL MEMBERS (WHATSAPP MASS MESSAGE) ---
   const contactAll = (g: any) => {
-    if (!g.members?.length) return alert("No numbers available");
+    if (!g.members?.length) return alert("No numbers");
 
-    const msg =
+    const message =
       `👋 *Split Partnering Update*\n\n` +
-      `Your partner group for *${g.category} → ${g.option}* is now *${g.status.toUpperCase()}*.\n\n` +
-      `Group Members: ${g.membersCount}/${g.requiredSize}\n\n` +
-      `Admin will guide you shortly.`;
+      `Your group for *${g.category} → ${g.option}* is ready.\n` +
+      `Members: ${g.membersCount}/${g.requiredSize}\n\n` +
+      `Admin will coordinate next steps.`;
 
-    const encoded = encodeURIComponent(msg);
+    const encoded = encodeURIComponent(message);
 
     g.members.forEach((p: string) => {
-      const clean = p.replace("+", "");
-      window.open(`https://wa.me/${clean}?text=${encoded}`, "_blank");
+      window.open(`https://wa.me/${p.replace("+", "")}?text=${encoded}`);
     });
   };
 
-  // --- CONTACT INDIVIDUAL MEMBER ---
   const contactOne = (g: any) => {
-    if (!g.members?.length) return alert("No members");
+    if (!g.members.length) return alert("No numbers");
 
-    const choice = prompt(`Enter phone number to contact:\n\n${g.members.join("\n")}`);
+    const choice = prompt(
+      `Enter number to contact:\n\n${g.members.join("\n")}`
+    );
     if (!choice) return;
 
-    if (!g.members.includes(choice)) {
-      alert("Number not found in group");
-      return;
-    }
+    if (!g.members.includes(choice)) return alert("Not in group");
 
-    const msg = `Hello! Your partner group for ${g.category} → ${g.option} is active.`;
-    const encoded = encodeURIComponent(msg);
-    const clean = choice.replace("+", "");
-
-    window.open(`https://wa.me/${clean}?text=${encoded}`, "_blank");
+    const encoded = encodeURIComponent("Hello! Your group is active.");
+    window.open(`https://wa.me/${choice}?text=${encoded}`);
   };
 
-  // -----------------------------
-  //        ADMIN LOGIN UI
-  // -----------------------------
   if (!authorized) {
     return (
-      <div className="pt-32 flex flex-col items-center text-white">
+      <div className="pt-32 text-white flex flex-col items-center">
         <h1 className="text-3xl font-bold text-[#16FF6E]">Admin Login</h1>
 
         <form className="mt-6 w-72 space-y-4" onSubmit={loginAdmin}>
@@ -162,7 +141,7 @@ export default function AdminPage() {
             onChange={(e) => setPasswordInput(e.target.value)}
           />
 
-          <button className="w-full py-2 bg-[#16FF6E] text-black rounded font-bold">
+          <button className="w-full bg-[#16FF6E] py-2 text-black rounded font-bold">
             Login
           </button>
         </form>
@@ -170,15 +149,12 @@ export default function AdminPage() {
     );
   }
 
-  // -----------------------------
-  //       MAIN ADMIN PANEL
-  // -----------------------------
   return (
     <div className="pt-28 px-6 text-white">
       <h1 className="text-3xl font-bold text-[#16FF6E]">Admin — Partner Groups</h1>
 
       {loading ? (
-        <p className="mt-4 text-gray-400">Loading...</p>
+        <p className="mt-4 text-gray-400">Loading…</p>
       ) : groups.length === 0 ? (
         <p className="mt-4 text-gray-400">No groups found.</p>
       ) : (
@@ -186,7 +162,7 @@ export default function AdminPage() {
           {groups.map((g) => (
             <div
               key={g.id}
-              className="p-4 bg-black/40 rounded-xl border border-[#16FF6E]/30"
+              className="p-4 bg-black/40 border border-[#16FF6E]/30 rounded-xl"
             >
               <p className="text-xl font-bold">
                 {g.category} → {g.option}
@@ -211,53 +187,51 @@ export default function AdminPage() {
                 {g.membersCount}/{g.requiredSize} partners
               </p>
 
-              {/* MEMBERS LIST */}
               <div className="mt-4">
-                <p className="font-bold text-lg">Members:</p>
-                <ul className="mt-2 ml-4 list-disc">
+                <p className="font-bold">Members:</p>
+                <ul className="ml-4 mt-2 list-disc">
                   {g.membersDetailed.map((m: any, i: number) => (
-                    <li key={i} className="text-sm">
+                    <li key={i}>
                       {m.name} — {m.phone}
                     </li>
                   ))}
                 </ul>
               </div>
 
-              {/* ADMIN BUTTONS */}
-              <div className="flex gap-2 mt-4 flex-wrap">
+              <div className="flex flex-wrap gap-2 mt-4">
                 <button
+                  className="px-3 py-1 bg-green-600 rounded text-sm"
                   onClick={() => contactAll(g)}
-                  className="px-3 py-1 bg-green-600 rounded text-sm font-bold"
                 >
                   WhatsApp All
                 </button>
 
                 <button
-                  onClick={() => contactOne(g)}
                   className="px-3 py-1 bg-green-800 rounded text-sm"
+                  onClick={() => contactOne(g)}
                 >
                   Message One
                 </button>
 
                 <button
-                  onClick={() => markCompleted(g.id)}
                   className="px-3 py-1 bg-blue-600 rounded text-sm"
+                  onClick={() => markCompleted(g.id)}
                 >
                   Mark Completed
                 </button>
 
                 <button
-                  onClick={() => exportCSV(g)}
                   className="px-3 py-1 bg-purple-600 rounded text-sm"
+                  onClick={() => exportCSV(g)}
                 >
                   Export CSV
                 </button>
 
                 <button
-                  onClick={() => deleteGroup(g.id)}
                   className="px-3 py-1 bg-red-600 rounded text-sm"
+                  onClick={() => deleteGroup(g.id)}
                 >
-                  Delete Group
+                  Delete
                 </button>
               </div>
             </div>

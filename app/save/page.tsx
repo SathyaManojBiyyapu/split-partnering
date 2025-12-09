@@ -209,9 +209,9 @@ function SaveContent() {
       const result = await createOrJoinGroup(category, option, phone);
 
       alert(
-        `Partner saved!  
-Status: ${result.status}  
-Partners: ${result.membersCount}/${getRequiredSize(option)}`
+        `Partner saved!\nStatus: ${result.status}\nPartners: ${result.membersCount}/${getRequiredSize(
+          option
+        )}`
       );
 
       window.location.href = "/dashboard";
