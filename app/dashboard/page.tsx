@@ -8,124 +8,123 @@ import {
   where,
   onSnapshot,
   getDocs,
-  doc,
-  getDoc,
   orderBy,
   DocumentData,
 } from "firebase/firestore";
 
+type Group = {
+  id: string;
+  category: string;
+  option: string;
+  membersCount: number;
+  requiredSize: number;
+  status: string; // waiting | ready | completed
+  createdAt?: any;
+};
+
 export default function DashboardPage() {
-  const [latestSelection, setLatestSelection] = useState<{ category: string; option: string } | null>(null);
-  const [group, setGroup] = useState<any | null>(null);
+  const [latestSelection, setLatestSelection] =
+    useState<{ category: string; option: string } | null>(null);
+
+  const [group, setGroup] = useState<Group | null>(null);
   const [loading, setLoading] = useState(true);
-  const [userName, setUserName] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
 
-  const phone = typeof window !== "undefined" ? localStorage.getItem("phone") : null;
+  const phone =
+    typeof window !== "undefined" ? localStorage.getItem("phone") : null;
 
-  const showToast = (txt: string) => {
-    setToast(txt);
-    setTimeout(() => setToast(null), 6000);
-  };
-
+  /* -----------------------------------------
+     FETCH USER'S MOST RECENT SELECTION
+  ------------------------------------------*/
   useEffect(() => {
     if (!phone) {
       setLoading(false);
       return;
     }
 
-    // load user profile name
-    const loadProfile = async () => {
-      try {
-        const uref = doc(db, "users", phone);
-        const snap = await getDoc(uref);
-        if (snap.exists()) {
-          setUserName((snap.data() as any).name || null);
-        }
-      } catch (err) {
-        console.error("load profile:", err);
-      }
-    };
-
-    // load latest selection
-    const fetchLatestSelection = async () => {
+    const fetchSelection = async () => {
       try {
         const selRef = collection(db, "selections");
-        const q = query(selRef, where("phone", "==", phone), orderBy("createdAt"));
-        const snap = await getDocs(q);
+        const qSel = query(
+          selRef,
+          where("phone", "==", phone),
+          orderBy("createdAt")
+        );
+
+        const snap = await getDocs(qSel);
 
         if (snap.empty) {
           setLatestSelection(null);
-          setLoading(false);
-          return;
+        } else {
+          const lastDoc = snap.docs[snap.docs.length - 1].data() as DocumentData;
+          setLatestSelection({
+            category: lastDoc.category,
+            option: lastDoc.option,
+          });
         }
-
-        const lastDoc = snap.docs[snap.docs.length - 1].data() as DocumentData;
-        setLatestSelection({ category: lastDoc.category, option: lastDoc.option });
       } catch (err) {
-        console.error("fetch latest selection:", err);
-      } finally {
-        setLoading(false);
+        console.error("Error fetching selections:", err);
       }
+
+      setLoading(false);
     };
 
-    loadProfile();
-    fetchLatestSelection();
+    fetchSelection();
   }, [phone]);
 
+  /* -----------------------------------------
+     REAL-TIME GROUP LISTENER
+  ------------------------------------------*/
   useEffect(() => {
-    if (!latestSelection || !phone) {
-      setGroup(null);
-      return;
-    }
+    if (!latestSelection || !phone) return;
 
     const groupsRef = collection(db, "groups");
-    const q = query(groupsRef, where("category", "==", latestSelection.category), where("option", "==", latestSelection.option));
 
-    const unsub = onSnapshot(q, (snapshot) => {
-      let found: any = null;
+    const qGroups = query(
+      groupsRef,
+      where("category", "==", latestSelection.category),
+      where("option", "==", latestSelection.option)
+    );
 
-      snapshot.docs.forEach((d) => {
-        const data = d.data() as any;
-        const members: string[] = data.members || [];
-        const g = { id: d.id, ...data };
-        if (members.includes(phone)) {
-          found = g;
-        }
-      });
+    const unsubscribe = onSnapshot(
+      qGroups,
+      (snapshot) => {
+        let match: Group | null = null;
 
-      if (!found) {
-        let first: any = null;
-        snapshot.docs.forEach((d) => {
-          const data = d.data() as any;
-          const g = { id: d.id, ...data };
-          if (!first) first = g;
-          if (g.status === "waiting") first = g;
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data() as any;
+          const members: string[] = data.members || [];
+
+          if (members.includes(phone)) {
+            match = {
+              id: docSnap.id,
+              category: data.category,
+              option: data.option,
+              membersCount: data.membersCount,
+              requiredSize: data.requiredSize,
+              status: data.status,
+              createdAt: data.createdAt,
+            };
+          }
         });
-        found = first;
-      }
 
-      // detect status change for toast
-      if (group && found && group.status !== found.status) {
-        if (found.status === "ready") {
-          showToast("🎉 Your partner match is ready! Admin will contact you soon.");
-        } else if (found.status === "completed") {
-          showToast("✅ Your partner group is marked completed.");
-        }
-      }
+        setGroup(match);
+      },
+      (err) => console.error("Group listener error:", err)
+    );
 
-      setGroup(found);
-    }, (err) => console.error("group onSnapshot error:", err));
+    return () => unsubscribe();
+  }, [latestSelection, phone]);
 
-    return () => unsub();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [latestSelection, phone, group]);
-
+  /* -----------------------------------------
+     UI STATES
+  ------------------------------------------*/
   if (!phone) {
     return (
       <div className="pt-32 px-6 text-white">
         <h1 className="text-3xl font-bold text-[#16FF6E]">My Partners</h1>
-        <p className="mt-4 text-gray-400">Please login with OTP to see your partner progress.</p>
+        <p className="mt-4 text-gray-400">
+          You are not logged in. Please login with OTP first.
+        </p>
       </div>
     );
   }
@@ -139,40 +138,79 @@ export default function DashboardPage() {
     );
   }
 
+  /* -----------------------------------------
+     MAIN DASHBOARD UI
+  ------------------------------------------*/
   return (
-    <div className="pt-32 px-6 text-white max-w-2xl mx-auto">
+    <div className="pt-32 px-6 text-white">
       <h1 className="text-3xl font-bold text-[#16FF6E]">My Partners</h1>
 
-      {userName && <p className="mt-2 text-gray-300">Hi, <span className="text-[#16FF6E] font-bold">{userName}</span></p>}
-
       {!latestSelection ? (
-        <p className="text-gray-400 mt-6">You have not saved any partner selection yet.</p>
+        <p className="text-gray-400 mt-4">
+          You have not saved any partner yet. Go to Categories and start.
+        </p>
       ) : (
         <>
-          <p className="text-gray-300 mt-4">Latest selection: <span className="text-[#16FF6E] font-bold">{latestSelection.category.replace("-", " ")} → {latestSelection.option}</span></p>
+          {/* Latest Selection */}
+          <p className="text-gray-300 mt-4">
+            Latest selection:{" "}
+            <span className="text-[#16FF6E] font-bold">
+              {latestSelection.category.replace("-", " ")} →{" "}
+              {latestSelection.option}
+            </span>
+          </p>
 
+          {/* No group yet */}
           {!group ? (
-            <p className="text-gray-400 mt-6">No partner info available yet.</p>
+            <p className="text-gray-400 mt-6">
+              Waiting for partner group to be created…
+            </p>
           ) : (
-            <div className="mt-6 p-4 bg-black/40 rounded-xl border border-[#16FF6E]/30">
-              <p><strong>Partner Status:</strong> <span className={group.status === "ready" ? "text-green-400" : "text-yellow-400"}>{group.status === "ready" ? "Partner Found ✔" : "Waiting for your partner"}</span></p>
+            <div className="mt-6 p-4 bg-black/40 rounded-xl border border-[#16FF6E]/30 max-w-xl">
 
-              <p className="mt-2"><strong>Partner progress:</strong> <span className="text-[#16FF6E] font-bold">{group.membersCount} / {group.requiredSize}</span></p>
+              {/* Status */}
+              <p>
+                <strong>Status:</strong>{" "}
+                <span
+                  className={
+                    group.status === "ready"
+                      ? "text-green-400"
+                      : group.status === "completed"
+                      ? "text-blue-400"
+                      : "text-yellow-400"
+                  }
+                >
+                  {group.status === "ready"
+                    ? "Partner Found ✔"
+                    : group.status === "completed"
+                    ? "Completed"
+                    : "Waiting for partners…"}
+                </span>
+              </p>
 
+              {/* Progress */}
+              <p className="mt-2">
+                <strong>Progress:</strong>{" "}
+                <span className="text-[#16FF6E] font-bold">
+                  {group.membersCount} / {group.requiredSize}
+                </span>
+              </p>
+
+              {/* Status message */}
               {group.status === "ready" ? (
-                <p className="text-gray-300 mt-4">Your partner match is ready. Admin will contact you privately with next steps.</p>
+                <p className="text-gray-300 mt-4">
+                  Your partner group is ready. Admin will contact you soon.
+                </p>
               ) : (
-                <p className="text-gray-300 mt-4">Waiting for {Math.max(0, group.requiredSize - group.membersCount)} more partner{group.requiredSize - group.membersCount > 1 ? "s" : ""}...</p>
+                <p className="text-gray-300 mt-4">
+                  Waiting for{" "}
+                  {group.requiredSize - group.membersCount} more partner
+                  {group.requiredSize - group.membersCount > 1 ? "s" : ""}…
+                </p>
               )}
             </div>
           )}
         </>
-      )}
-
-      {toast && (
-        <div className="fixed bottom-6 right-6 bg-[#16FF6E] text-black px-4 py-2 rounded shadow">
-          {toast}
-        </div>
       )}
     </div>
   );

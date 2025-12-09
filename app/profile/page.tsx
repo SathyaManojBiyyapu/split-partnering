@@ -1,131 +1,125 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/app/context/AuthContext";
+import { useState, useEffect } from "react";
 import { db } from "@/firebase/config";
-import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 
 export default function ProfilePage() {
-  const router = useRouter();
-  const { user, loading } = useAuth();
-
-  const [loadingProfile, setLoadingProfile] = useState(true);
-
   const [name, setName] = useState("");
-  const [age, setAge] = useState("");
   const [city, setCity] = useState("");
-  const [gender, setGender] = useState("");
-  const [email, setEmail] = useState("");
-  const [interests, setInterests] = useState("");
+  const [state, setState] = useState("");
+  const [country, setCountry] = useState("");
+  const [loading, setLoading] = useState(true);
 
+  const phone =
+    typeof window !== "undefined" ? localStorage.getItem("phone") : null;
+
+  // Fetch existing profile data
   useEffect(() => {
-    if (loading) return;
-    if (!user?.phoneNumber) {
-      router.push("/login");
+    if (!phone) {
+      setLoading(false);
       return;
     }
 
-    const load = async () => {
-      const ref = doc(db, "users", user.phoneNumber);
-      const snap = await getDoc(ref);
+    const fetchProfile = async () => {
+      const userRef = doc(db, "users", phone);
+      const snapshot = await getDoc(userRef);
 
-      if (snap.exists()) {
-        const d: any = snap.data();
-        setName(d.name || "");
-        setAge(d.age || "");
-        setCity(d.city || "");
-        setGender(d.gender || "");
-        setEmail(d.email || "");
-        setInterests(d.interests || "");
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        setName(data.name || "");
+        setCity(data.city || "");
+        setState(data.state || "");
+        setCountry(data.country || "");
       }
 
-      setLoadingProfile(false);
+      setLoading(false);
     };
 
-    load();
-  }, [user, loading]);
+    fetchProfile();
+  }, [phone]);
 
-  const saveProfile = async (e: any) => {
-    e.preventDefault();
+  // Save profile
+  const saveProfile = async () => {
+    if (!phone) return alert("Login again, phone missing.");
+
+    const userRef = doc(db, "users", phone);
 
     await setDoc(
-      doc(db, "users", user.phoneNumber),
+      userRef,
       {
+        phone,
         name,
-        age,
         city,
-        gender,
-        email,
-        interests,
-        updatedAt: serverTimestamp(),
+        state,
+        country,
+        updatedAt: new Date(),
       },
       { merge: true }
     );
 
-    alert("Profile saved!");
-    router.push("/categories");
+    alert("Profile saved successfully!");
+    window.location.href = "/categories";
   };
 
-  if (loading || loadingProfile)
-    return <div className="pt-32 px-6 text-white">Loading profile...</div>;
+  if (!phone) {
+    return (
+      <div className="pt-32 px-6 text-white">
+        <h1 className="text-3xl font-bold">Profile</h1>
+        <p className="mt-3 text-gray-300">
+          Please login first to update your profile.
+        </p>
+      </div>
+    );
+  }
+
+  if (loading)
+    return (
+      <div className="pt-32 px-6 text-white">Loading Profile...</div>
+    );
 
   return (
-    <div className="pt-32 px-6 text-white max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold text-[#16FF6E] mb-4">Your Profile</h1>
-      <p className="mb-3 text-gray-300">
-        Logged in as <b>{user?.phoneNumber}</b>
-      </p>
+    <div className="text-white pt-32 flex flex-col items-center gap-5 px-6">
+      <h1 className="text-3xl font-bold text-[#16FF6E]">Your Profile</h1>
 
-      <form onSubmit={saveProfile} className="space-y-4">
-        <input
-          className="p-3 rounded w-full text-black"
-          placeholder="Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
+      <input
+        type="text"
+        placeholder="Full Name"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        className="p-3 rounded text-black w-72"
+      />
 
-        <div className="grid grid-cols-2 gap-4">
-          <input
-            className="p-3 rounded w-full text-black"
-            placeholder="Age"
-            value={age}
-            onChange={(e) => setAge(e.target.value)}
-          />
+      <input
+        type="text"
+        placeholder="City"
+        value={city}
+        onChange={(e) => setCity(e.target.value)}
+        className="p-3 rounded text-black w-72"
+      />
 
-          <input
-            className="p-3 rounded w-full text-black"
-            placeholder="Gender"
-            value={gender}
-            onChange={(e) => setGender(e.target.value)}
-          />
-        </div>
+      <input
+        type="text"
+        placeholder="State"
+        value={state}
+        onChange={(e) => setState(e.target.value)}
+        className="p-3 rounded text-black w-72"
+      />
 
-        <input
-          className="p-3 rounded w-full text-black"
-          placeholder="City"
-          value={city}
-          onChange={(e) => setCity(e.target.value)}
-        />
+      <input
+        type="text"
+        placeholder="Country"
+        value={country}
+        onChange={(e) => setCountry(e.target.value)}
+        className="p-3 rounded text-black w-72"
+      />
 
-        <input
-          className="p-3 rounded w-full text-black"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-
-        <input
-          className="p-3 rounded w-full text-black"
-          placeholder="Interests"
-          value={interests}
-          onChange={(e) => setInterests(e.target.value)}
-        />
-
-        <button className="px-6 py-3 bg-[#16FF6E] text-black rounded font-bold">
-          Save Profile
-        </button>
-      </form>
+      <button
+        onClick={saveProfile}
+        className="bg-[#16FF6E] text-black px-6 py-3 rounded-xl font-bold"
+      >
+        Save Profile
+      </button>
     </div>
   );
 }

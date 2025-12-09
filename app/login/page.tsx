@@ -4,7 +4,7 @@ import { useState } from "react";
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 import { auth } from "@/firebase/config";
 
-// ✅ Add global window types HERE (CORRECT PLACE)
+// Global window types
 declare global {
   interface Window {
     recaptchaVerifier: any;
@@ -17,21 +17,21 @@ export default function LoginPage() {
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // 🔥 Setup invisible Recaptcha (MODULAR Firebase v9 Syntax)
+  // Setup Recaptcha
   const setupRecaptcha = () => {
     if (!window.recaptchaVerifier) {
       window.recaptchaVerifier = new RecaptchaVerifier(
-        auth,                    // ✔ AUTH FIRST
-        "recaptcha-container",   // ✔ ELEMENT ID SECOND
-        { size: "invisible" }    // ✔ CONFIG THIRD
+        auth,                    // Auth first
+        "recaptcha-container",   // Element ID second
+        { size: "invisible" }    // Config third
       );
     }
     return window.recaptchaVerifier;
   };
 
-  // 🔥 Send OTP
+  // Send OTP
   const sendOTP = async () => {
-    if (!phone) return alert("Enter mobile number");
+    if (!phone) return alert("Enter your phone number.");
     setLoading(true);
 
     try {
@@ -44,18 +44,18 @@ export default function LoginPage() {
       );
 
       window.confirmationResult = confirmation;
-      alert("OTP sent!");
-    } catch (err: any) {
-      console.error("OTP Error:", err.code, err.message);
+      alert("OTP Sent!");
+    } catch (error: any) {
+      console.error("OTP Error:", error.code, error.message);
       alert("Failed to send OTP.");
     }
 
     setLoading(false);
   };
 
-  // 🔥 Verify OTP
+  // Verify OTP
   const verifyOTP = async () => {
-    if (!otp) return alert("Enter OTP");
+    if (!otp) return alert("Enter OTP.");
 
     try {
       const result = await window.confirmationResult.confirm(otp);
@@ -64,10 +64,12 @@ export default function LoginPage() {
       localStorage.setItem("loggedIn", "true");
       localStorage.setItem("phone", user.phoneNumber);
 
-      alert("Login successful!");
-      window.location.href = "/categories";
-    } catch (err) {
-      alert("Invalid OTP");
+      alert("Login Successful!");
+
+      // Redirect to Profile
+      window.location.href = "/profile";
+    } catch (error) {
+      alert("Invalid OTP.");
     }
   };
 
@@ -77,10 +79,10 @@ export default function LoginPage() {
 
       <input
         type="tel"
-        placeholder="Enter mobile number"
+        placeholder="Enter Mobile Number"
         value={phone}
         onChange={(e) => setPhone(e.target.value)}
-        className="p-3 rounded text-black w-60"
+        className="p-3 rounded text-black w-64"
       />
 
       <button
@@ -96,7 +98,7 @@ export default function LoginPage() {
         placeholder="Enter OTP"
         value={otp}
         onChange={(e) => setOtp(e.target.value)}
-        className="p-3 rounded text-black w-60 mt-4"
+        className="p-3 rounded text-black w-64 mt-3"
       />
 
       <button
@@ -106,7 +108,6 @@ export default function LoginPage() {
         Verify OTP
       </button>
 
-      {/* Required by Firebase */}
       <div id="recaptcha-container"></div>
     </div>
   );
