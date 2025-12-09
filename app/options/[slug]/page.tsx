@@ -69,12 +69,13 @@ const categoryOptions: Record<string, { name: string; slug: string }[]> = {
 export default function OptionsPage({ params }: any) {
   const slug: string = params?.slug || "";
 
+  // Load the sub-options
   const options = categoryOptions[slug] || [];
 
-  // If slug is invalid -> show not found message
+  // Title for the page
   const title =
-    slug && categoryOptions[slug]
-      ? slug.replace("-", " ").toUpperCase()
+    categoryOptions[slug]
+      ? slug.replace(/-/g, " ").toUpperCase()
       : "CATEGORY NOT FOUND";
 
   return (
@@ -89,7 +90,7 @@ export default function OptionsPage({ params }: any) {
             <a
               key={item.slug}
               href={`/save/?category=${slug}&option=${item.slug}`}
-              className="p-5 rounded-xl border border-[#16FF6E]/40 bg-black/40 hover:bg-black/70 transition"
+              className="p-5 rounded-xl border border-[#16FF6E]/40 bg-black/40 hover:bg-black/70 transition-all"
             >
               <h2 className="text-xl">{item.name}</h2>
             </a>
