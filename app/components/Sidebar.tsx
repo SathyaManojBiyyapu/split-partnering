@@ -9,6 +9,7 @@ export default function Sidebar() {
   const [guest, setGuest] = useState(false);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
     if (localStorage.getItem("loggedIn") === "true") setLoggedIn(true);
     if (localStorage.getItem("guest") === "true") setGuest(true);
   }, []);
@@ -20,7 +21,7 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* SIDEBAR BUTTON (RIGHT SIDE) */}
+      {/* TOGGLE BUTTON (RIGHT TOP) */}
       <button
         onClick={() => setOpen(true)}
         className="fixed top-6 right-4 z-50 bg-[#16FF6E] text-black px-3 py-2 rounded-md shadow-lg font-bold"
@@ -36,39 +37,22 @@ export default function Sidebar() {
         />
       )}
 
-      {/* SIDEBAR (RIGHT PANEL) */}
+      {/* SIDEBAR PANEL (RIGHT) */}
       <div
         className={`fixed top-0 right-0 h-full w-72 bg-black border-l border-[#16FF6E]/30 z-50 p-6 transform transition-all ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <h2 className="text-xl font-bold text-[#16FF6E] mb-6">Menu</h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-[#16FF6E]">Menu</h2>
+          <button onClick={() => setOpen(false)} className="text-gray-400">
+            ✕
+          </button>
+        </div>
 
         <div className="flex flex-col gap-4 text-sm">
 
-          {/* PROFILE */}
-          {(loggedIn || guest) && (
-            <Link
-              href="/profile"
-              className="text-gray-200 hover:text-[#16FF6E]"
-              onClick={() => setOpen(false)}
-            >
-              👤 My Profile
-            </Link>
-          )}
-
-          {/* LOGIN */}
-          {!loggedIn && !guest && (
-            <Link
-              href="/login"
-              className="text-gray-200 hover:text-[#16FF6E]"
-              onClick={() => setOpen(false)}
-            >
-              🔐 Login / Signup
-            </Link>
-          )}
-
-          {/* NAVIGATION LINKS */}
+          {/* MAIN LINKS */}
           <Link
             href="/"
             className="text-gray-200 hover:text-[#16FF6E]"
@@ -93,13 +77,23 @@ export default function Sidebar() {
             🤝 My Matches
           </Link>
 
-          {/* EXTRA PAGES */}
+          {(loggedIn || guest) && (
+            <Link
+              href="/profile"
+              className="text-gray-200 hover:text-[#16FF6E]"
+              onClick={() => setOpen(false)}
+            >
+              👤 My Profile
+            </Link>
+          )}
+
+          {/* HELP / AI */}
           <Link
             href="/help"
             className="text-gray-200 hover:text-[#16FF6E]"
             onClick={() => setOpen(false)}
           >
-            ❓ How It Works
+            ❓ How Splitting Works
           </Link>
 
           <Link
@@ -107,10 +101,20 @@ export default function Sidebar() {
             className="text-gray-200 hover:text-[#16FF6E]"
             onClick={() => setOpen(false)}
           >
-            🤖 AI Assistant
+            🤖 AI Chat
           </Link>
 
-          {/* LOGOUT */}
+          {/* LOGIN / LOGOUT */}
+          {!loggedIn && !guest && (
+            <Link
+              href="/login"
+              className="text-gray-200 hover:text-[#16FF6E]"
+              onClick={() => setOpen(false)}
+            >
+              🔐 Login / Signup
+            </Link>
+          )}
+
           {(loggedIn || guest) && (
             <button
               onClick={() => {
@@ -123,10 +127,10 @@ export default function Sidebar() {
             </button>
           )}
 
-          {/* ADMIN (Hidden) */}
+          {/* HIDDEN ADMIN LINK */}
           <button
             onClick={() => (window.location.href = "/admin")}
-            className="text-[10px] text-gray-500 opacity-20 text-left hover:opacity-100"
+            className="text-[10px] text-gray-500 opacity-20 text-left hover:opacity-100 mt-4"
           >
             admin panel
           </button>

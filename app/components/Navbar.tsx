@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const links = [
   { href: "/", label: "Home" },
@@ -12,10 +13,23 @@ const links = [
 
 export default function Navbar() {
   const pathname = usePathname();
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [guest, setGuest] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (localStorage.getItem("loggedIn") === "true") setLoggedIn(true);
+    if (localStorage.getItem("guest") === "true") setGuest(true);
+  }, []);
+
+  const logout = () => {
+    localStorage.clear();
+    window.location.href = "/login";
+  };
 
   return (
     <header className="sticky top-0 z-30 border-b border-[#16FF6E]/30 bg-black/70 backdrop-blur">
-      <nav className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
+      <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
 
         {/* LOGO */}
         <Link href="/" className="flex items-center gap-2">
@@ -25,7 +39,7 @@ export default function Navbar() {
           </span>
         </Link>
 
-        {/* NAV LINKS */}
+        {/* LINKS + LOGIN/LOGOUT */}
         <div className="flex items-center gap-4 text-sm">
           {links.map((link) => {
             const isActive = pathname === link.href;
@@ -44,15 +58,26 @@ export default function Navbar() {
             );
           })}
 
-          {/* LOGIN BUTTON */}
-          <Link
-            href="/login"
-            className="ml-3 rounded-full border border-[#16FF6E]/40 bg-black/60 px-3 py-1 text-xs font-medium text-[#16FF6E] shadow-[0_0_10px_rgba(22,255,110,0.4)] hover:border-[#16FF6E]"
-          >
-            Login / OTP
-          </Link>
-        </div>
+          {/* LOGIN */}
+          {!loggedIn && !guest && (
+            <Link
+              href="/login"
+              className="ml-2 rounded-full border border-[#16FF6E]/40 bg-black/60 px-3 py-1 text-xs font-medium text-[#16FF6E] shadow-[0_0_10px_rgba(22,255,110,0.4)] hover:border-[#16FF6E]"
+            >
+              Login / OTP
+            </Link>
+          )}
 
+          {/* LOGOUT */}
+          {(loggedIn || guest) && (
+            <button
+              onClick={logout}
+              className="ml-2 rounded-full border border-red-500/40 bg-red-600/20 px-3 py-1 text-xs font-medium text-red-400 hover:bg-red-600/30 hover:border-red-500 transition"
+            >
+              Logout
+            </button>
+          )}
+        </div>
       </nav>
     </header>
   );

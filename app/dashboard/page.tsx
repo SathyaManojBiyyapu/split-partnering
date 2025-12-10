@@ -12,8 +12,8 @@ import {
   getDoc,
   doc,
   updateDoc,
-  DocumentData,
   arrayRemove,
+  DocumentData,
 } from "firebase/firestore";
 
 type Group = {
@@ -39,28 +39,28 @@ export default function DashboardPage() {
   const [matches, setMatches] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
 
-  /* -----------------------------------------
+  /* ------------------------------------------------
         FETCH LATEST SELECTION
-  ------------------------------------------*/
+  ------------------------------------------------ */
   useEffect(() => {
     if (!phone) {
       setLoading(false);
       return;
     }
 
-    const loadLast = async () => {
+    const loadLatest = async () => {
       try {
         const selRef = collection(db, "selections");
         const qSel = query(
           selRef,
           where("phone", "==", phone),
-          orderBy("createdAt")
+          orderBy("createdAt", "desc")
         );
 
         const snap = await getDocs(qSel);
 
         if (!snap.empty) {
-          const last = snap.docs[snap.docs.length - 1].data() as DocumentData;
+          const last = snap.docs[0].data() as DocumentData;
 
           setLatestSelection({
             category: last.category,
@@ -68,18 +68,18 @@ export default function DashboardPage() {
           });
         }
       } catch (err) {
-        console.error("Selection fetch error:", err);
+        console.error("Latest selection error:", err);
       }
 
       setLoading(false);
     };
 
-    loadLast();
+    loadLatest();
   }, [phone]);
 
-  /* -----------------------------------------
-        FETCH ALL GROUPS (LIVE)
-  ------------------------------------------*/
+  /* ------------------------------------------------
+        FETCH USER GROUPS (LIVE)
+  ------------------------------------------------ */
   useEffect(() => {
     if (!phone) return;
 
@@ -95,17 +95,14 @@ export default function DashboardPage() {
 
       snapshot.forEach((docSnap) => {
         const data = docSnap.data() as any;
-
-        const membersClean = (data.members || []).map((p: string) =>
-          p.trim()
-        );
+        const cleanMembers = (data.members || []).map((p: string) => p.trim());
 
         list.push({
           id: docSnap.id,
           category: data.category,
           option: data.option,
-          members: membersClean,
-          membersCount: data.membersCount ?? membersClean.length,
+          members: cleanMembers,
+          membersCount: data.membersCount ?? cleanMembers.length,
           requiredSize: data.requiredSize,
           status: data.status,
           createdAt: data.createdAt,
@@ -118,9 +115,9 @@ export default function DashboardPage() {
     return () => unsub();
   }, [phone]);
 
-  /* -----------------------------------------
+  /* ------------------------------------------------
         DELETE MATCH
-  ------------------------------------------*/
+  ------------------------------------------------ */
   const deleteMatch = async (groupId: string) => {
     if (!confirm("Remove this match?")) return;
     if (!phone) return;
@@ -140,28 +137,26 @@ export default function DashboardPage() {
 
       alert("Match removed successfully");
     } catch (err) {
-      console.error("Delete match error:", err);
+      console.error("Delete error:", err);
       alert("Failed to remove match");
     }
   };
 
-  /* -----------------------------------------
-        NOT LOGGED IN
-  ------------------------------------------*/
+  /* ------------------------------------------------
+        AUTH REQUIRED
+  ------------------------------------------------ */
   if (!phone) {
     return (
       <div className="pt-32 px-6 text-white">
         <h1 className="text-3xl font-bold text-[#16FF6E]">My Partners</h1>
-        <p className="mt-4 text-gray-400">
-          You are not logged in. Please login with OTP first.
-        </p>
+        <p className="mt-4 text-gray-400">Please login with OTP.</p>
       </div>
     );
   }
 
-  /* -----------------------------------------
+  /* ------------------------------------------------
         LOADING
-  ------------------------------------------*/
+  ------------------------------------------------ */
   if (loading) {
     return (
       <div className="pt-32 px-6 text-white">
@@ -171,9 +166,9 @@ export default function DashboardPage() {
     );
   }
 
-  /* -----------------------------------------
+  /* ------------------------------------------------
         UI
-  ------------------------------------------*/
+  ------------------------------------------------ */
   return (
     <div className="pt-32 px-6 text-white">
       <h1 className="text-3xl font-bold text-[#16FF6E]">My Partners</h1>
@@ -182,7 +177,7 @@ export default function DashboardPage() {
         <p className="text-gray-300 mt-4">
           Latest selection:{" "}
           <span className="text-[#16FF6E] font-bold">
-            {latestSelection.category.replace("-", " ")} →
+            {latestSelection.category.replace("-", " ")} →{" "}
             {latestSelection.option}
           </span>
         </p>

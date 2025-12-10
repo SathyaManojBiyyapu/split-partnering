@@ -62,7 +62,11 @@ const getRequiredSize = (opt: string) => GROUP_SIZE[opt] || 2;
 /* -----------------------------------------
    CREATE OR JOIN GROUP
 ------------------------------------------*/
-async function createOrJoinGroup(category: string, option: string, rawPhone: string) {
+async function createOrJoinGroup(
+  category: string,
+  option: string,
+  rawPhone: string
+) {
   const cleanPhone = rawPhone.trim();
 
   const groupsRef = collection(db, "groups");
@@ -154,7 +158,7 @@ function SaveContent() {
 
   const [userName, setUserName] = useState<string | null>(null);
 
-  /* BLOCK GUEST */
+  /* BLOCK GUEST + REQUIRE LOGIN */
   useEffect(() => {
     if (isGuest) {
       alert("Guest mode cannot save partner. Please login.");
@@ -171,11 +175,15 @@ function SaveContent() {
     if (!phone) return;
 
     const fetchUser = async () => {
-      const userRef = doc(db, "users", phone);
-      const snap = await getDoc(userRef);
+      try {
+        const userRef = doc(db, "users", phone);
+        const snap = await getDoc(userRef);
 
-      if (snap.exists()) {
-        setUserName((snap.data() as any).name || null);
+        if (snap.exists()) {
+          setUserName((snap.data() as any).name || null);
+        }
+      } catch (err) {
+        console.error("Profile load error:", err);
       }
     };
 
@@ -191,13 +199,28 @@ function SaveContent() {
     try {
       const result = await createOrJoinGroup(category, option, cleanPhone);
 
-      await addDoc(collection(db, "selections"), {
-        phone: cleanPhone,
-        userName,
-        category,
-        option,
-        createdAt: serverTimestamp(),
-      });
+      // Ensure user exists in users collection (for admin panel)
+      const userRef = doc(db, "users", cleanPhone);
+      const userSnap = await getDoc(userRef);
+
+      if (!userSnap.exists()) {
+        await setDoc(userRef, {
+          phone: cleanPhone,
+          name: userName || "User",
+          createdAt: serverTimestamp(),
+        });
+      }
+
+      // Avoid duplicate selections if already in the group
+      if (result.status !== "already") {
+        await addDoc(collection(db, "selections"), {
+          phone: cleanPhone,
+          userName,
+          category,
+          option,
+          createdAt: serverTimestamp(),
+        });
+      }
 
       alert(
         `Partner saved!\n\nStatus: ${result.status}\nMembers: ${result.membersCount}/${getRequiredSize(
@@ -214,7 +237,9 @@ function SaveContent() {
 
   return (
     <div className="min-h-screen pt-28 px-6 text-white">
-      <h1 className="text-3xl font-bold text-[#16FF6E] mb-6">Make Your Match</h1>
+      <h1 className="text-3xl font-bold text-[#16FF6E] mb-6">
+        Make Your Match
+      </h1>
 
       <p className="text-gray-300 mb-4">
         You selected <strong>{option}</strong> under{" "}

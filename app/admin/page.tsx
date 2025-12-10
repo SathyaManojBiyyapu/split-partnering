@@ -46,18 +46,18 @@ export default function AdminPage() {
       const list: any[] = [];
 
       for (const g of snap.docs) {
-        const data = g.data();
+        const data = g.data() as any;
 
         const membersDetailed: any[] = [];
         for (const phone of data.members || []) {
-          const cleanPhone = phone.trim();
+          const cleanPhone = (phone as string).trim();
 
           const userRef = doc(db, "users", cleanPhone);
           const userSnap = await getDoc(userRef);
 
           membersDetailed.push({
             phone: cleanPhone,
-            name: userSnap.exists() ? userSnap.data().name : "Unknown User",
+            name: userSnap.exists() ? userSnap.data()?.name : "Unknown User",
           });
         }
 
@@ -116,7 +116,7 @@ export default function AdminPage() {
   };
 
   /* ------------------------------------------
-       REMOVE A MEMBER (FIXED)
+       REMOVE A MEMBER (and update status)
   ------------------------------------------ */
   const removeMember = async (groupId: string, phone: string) => {
     if (!confirm("Remove this member?")) return;
@@ -129,16 +129,23 @@ export default function AdminPage() {
 
       const data = snap.data() as any;
 
+      const members: string[] = (data.members || []).map((p: string) =>
+        p.trim()
+      );
+      const filtered = members.filter((p) => p !== phone.trim());
+
       const currentCount =
         data.membersCount !== undefined
           ? data.membersCount
-          : data.members?.length || 0;
+          : members.length;
 
       const newCount = Math.max(0, currentCount - 1);
+      const required = data.requiredSize || filtered.length;
 
       await updateDoc(gRef, {
-        members: data.members.filter((p: string) => p.trim() !== phone),
+        members: filtered,
         membersCount: newCount,
+        status: newCount < required ? "waiting" : data.status,
       });
 
       alert("Member removed.");
@@ -297,7 +304,7 @@ export default function AdminPage() {
                 <ul className="ml-4 mt-2 list-disc">
                   {g.membersDetailed.map((m: any, i: number) => (
                     <li key={i}>
-                      {m.name} — {m.phone}  
+                      {m.name} — {m.phone}
                       <button
                         onClick={() => removeMember(g.id, m.phone)}
                         className="ml-2 px-2 py-1 bg-red-600 rounded text-xs"
