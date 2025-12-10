@@ -6,11 +6,14 @@ import {
   collection,
   query,
   where,
+  orderBy,
   onSnapshot,
   getDocs,
-  orderBy,
+  doc,
+  updateDoc,
   DocumentData,
 } from "firebase/firestore";
+import { arrayRemove } from "firebase/firestore";
 
 type Group = {
   id: string;
@@ -26,22 +29,22 @@ export default function DashboardPage() {
   const [latestSelection, setLatestSelection] =
     useState<{ category: string; option: string } | null>(null);
 
-  const [group, setGroup] = useState<Group | null>(null);
+  const [matches, setMatches] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
 
   const phone =
     typeof window !== "undefined" ? localStorage.getItem("phone") : null;
 
-  /* -----------------------------------------
-     FETCH USER'S MOST RECENT SELECTION
-  ------------------------------------------*/
+  /* ------------------------------------------------
+        FETCH USER'S MOST RECENT SELECTION
+  ------------------------------------------------ */
   useEffect(() => {
     if (!phone) {
       setLoading(false);
       return;
     }
 
-    const fetchSelection = async () => {
+    const fetchLastSelection = async () => {
       try {
         const selRef = collection(db, "selections");
         const qSel = query(
@@ -52,73 +55,79 @@ export default function DashboardPage() {
 
         const snap = await getDocs(qSel);
 
-        if (snap.empty) {
-          setLatestSelection(null);
-        } else {
+        if (!snap.empty) {
           const lastDoc = snap.docs[snap.docs.length - 1].data() as DocumentData;
 
           setLatestSelection({
             category: lastDoc.category,
             option: lastDoc.option,
           });
+        } else {
+          setLatestSelection(null);
         }
       } catch (err) {
-        console.error("Error fetching selections:", err);
+        console.error("Selection fetch error:", err);
       }
 
       setLoading(false);
     };
 
-    fetchSelection();
+    fetchLastSelection();
   }, [phone]);
 
-  /* -----------------------------------------
-     REAL-TIME GROUP LISTENER
-  ------------------------------------------*/
+  /* ------------------------------------------------
+        FETCH ALL GROUPS THE USER IS IN
+  ------------------------------------------------ */
   useEffect(() => {
-    if (!latestSelection || !phone) return;
+    if (!phone) return;
 
     const groupsRef = collection(db, "groups");
-
     const qGroups = query(
       groupsRef,
-      where("category", "==", latestSelection.category),
-      where("option", "==", latestSelection.option)
+      where("members", "array-contains", phone),
+      orderBy("createdAt", "desc")
     );
 
-    const unsubscribe = onSnapshot(
-      qGroups,
-      (snapshot) => {
-        let match: Group | null = null;
+    const unsubscribe = onSnapshot(qGroups, (snapshot) => {
+      let list: any[] = [];
 
-        snapshot.forEach((docSnap) => {
-          const data = docSnap.data() as any;
-          const members: string[] = data.members || [];
-
-          if (members.includes(phone)) {
-            match = {
-              id: docSnap.id,
-              category: data.category,
-              option: data.option,
-              membersCount: data.membersCount,
-              requiredSize: data.requiredSize,
-              status: data.status,
-              createdAt: data.createdAt,
-            };
-          }
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        list.push({
+          id: docSnap.id,
+          ...data,
         });
+      });
 
-        setGroup(match);
-      },
-      (err) => console.error("Group listener error:", err)
-    );
+      setMatches(list);
+    });
 
     return () => unsubscribe();
-  }, [latestSelection, phone]);
+  }, [phone]);
 
-  /* -----------------------------------------
-     UI: USER NOT LOGGED IN
-  ------------------------------------------*/
+  /* ------------------------------------------------
+        DELETE MATCH (remove user from group)
+  ------------------------------------------------ */
+  const deleteMatch = async (groupId: string) => {
+    if (!confirm("Remove this match?")) return;
+    if (!phone) return;
+
+    try {
+      const gRef = doc(db, "groups", groupId);
+      await updateDoc(gRef, {
+        members: arrayRemove(phone),
+      });
+
+      alert("Match removed successfully");
+    } catch (err) {
+      console.error("Delete match error:", err);
+      alert("Failed to remove match");
+    }
+  };
+
+  /* ------------------------------------------------
+        1️⃣ USER NOT LOGGED IN
+  ------------------------------------------------ */
   if (!phone) {
     return (
       <div className="pt-32 px-6 text-white">
@@ -130,9 +139,9 @@ export default function DashboardPage() {
     );
   }
 
-  /* -----------------------------------------
-     UI: LOADING
-  ------------------------------------------*/
+  /* ------------------------------------------------
+        2️⃣ LOADING
+  ------------------------------------------------ */
   if (loading) {
     return (
       <div className="pt-32 px-6 text-white">
@@ -142,40 +151,42 @@ export default function DashboardPage() {
     );
   }
 
-  /* -----------------------------------------
-     UI: MAIN DASHBOARD
-  ------------------------------------------*/
+  /* ------------------------------------------------
+        3️⃣ MAIN DASHBOARD
+  ------------------------------------------------ */
   return (
     <div className="pt-32 px-6 text-white">
       <h1 className="text-3xl font-bold text-[#16FF6E]">My Partners</h1>
 
-      {/* USER HAS NO SAVED SELECTION */}
-      {!latestSelection ? (
+      {/* LATEST SELECTION (your old UI) */}
+      {latestSelection && (
+        <p className="text-gray-300 mt-4">
+          Latest selection:{" "}
+          <span className="text-[#16FF6E] font-bold">
+            {latestSelection.category.replace("-", " ")} →{" "}
+            {latestSelection.option}
+          </span>
+        </p>
+      )}
+
+      {/* NO MATCHES */}
+      {matches.length === 0 ? (
         <p className="text-gray-400 mt-4">
-          You have not saved any partner yet. Go to Categories and start.
+          You have not saved any partner yet.
         </p>
       ) : (
-        <>
-          {/* LATEST SELECTION */}
-          <p className="text-gray-300 mt-4">
-            Latest selection:{" "}
-            <span className="text-[#16FF6E] font-bold">
-              {latestSelection.category.replace("-", " ")} →{" "}
-              {latestSelection.option}
-            </span>
-          </p>
+        <div className="mt-8 space-y-4 max-w-xl">
+          {matches.map((group) => (
+            <div
+              key={group.id}
+              className="p-4 bg-black/40 rounded-xl border border-[#16FF6E]/30"
+            >
+              <p className="text-xl font-bold text-[#16FF6E] capitalize">
+                {group.category.replace("-", " ")} → {group.option}
+              </p>
 
-          {/* NO GROUP YET */}
-          {!group ? (
-            <p className="text-gray-400 mt-6">
-              Waiting for partner group to be created…
-            </p>
-          ) : (
-            <div className="mt-6 p-4 bg-black/40 rounded-xl border border-[#16FF6E]/30 max-w-xl">
-
-              {/* STATUS */}
-              <p>
-                <strong>Status:</strong>{" "}
+              <p className="mt-1">
+                Status:{" "}
                 <span
                   className={
                     group.status === "ready"
@@ -185,37 +196,23 @@ export default function DashboardPage() {
                       : "text-yellow-400"
                   }
                 >
-                  {group.status === "ready"
-                    ? "Partner Found ✔"
-                    : group.status === "completed"
-                    ? "Completed"
-                    : "Waiting for partners…"}
+                  {group.status}
                 </span>
               </p>
 
-              {/* PROGRESS */}
-              <p className="mt-2">
-                <strong>Progress:</strong>{" "}
-                <span className="text-[#16FF6E] font-bold">
-                  {group.membersCount} / {group.requiredSize}
-                </span>
+              <p className="mt-1 text-gray-300">
+                Progress: {group.membersCount}/{group.requiredSize}
               </p>
 
-              {/* STATUS MESSAGE */}
-              {group.status === "ready" ? (
-                <p className="text-gray-300 mt-4">
-                  Your partner group is ready. Admin will contact you soon.
-                </p>
-              ) : (
-                <p className="text-gray-300 mt-4">
-                  Waiting for{" "}
-                  {group.requiredSize - group.membersCount} more partner
-                  {group.requiredSize - group.membersCount > 1 ? "s" : ""}…
-                </p>
-              )}
+              <button
+                onClick={() => deleteMatch(group.id)}
+                className="mt-3 px-3 py-2 bg-red-600 rounded text-sm"
+              >
+                Delete Match
+              </button>
             </div>
-          )}
-        </>
+          ))}
+        </div>
       )}
     </div>
   );
