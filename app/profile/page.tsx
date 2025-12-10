@@ -14,7 +14,9 @@ export default function ProfilePage() {
   const phone =
     typeof window !== "undefined" ? localStorage.getItem("phone") : null;
 
-  // Fetch existing profile data
+  /* ------------------------------------------
+        FETCH PROFILE VALUES
+  ------------------------------------------- */
   useEffect(() => {
     if (!phone) {
       setLoading(false);
@@ -26,7 +28,7 @@ export default function ProfilePage() {
       const snapshot = await getDoc(userRef);
 
       if (snapshot.exists()) {
-        const data = snapshot.data();
+        const data = snapshot.data() as any;
         setName(data.name || "");
         setCity(data.city || "");
         setState(data.state || "");
@@ -39,9 +41,11 @@ export default function ProfilePage() {
     fetchProfile();
   }, [phone]);
 
-  // Save profile
+  /* ------------------------------------------
+        SAVE PROFILE
+  ------------------------------------------- */
   const saveProfile = async () => {
-    if (!phone) return alert("Login again, phone missing.");
+    if (!phone) return alert("Login again. Phone number missing!");
 
     const userRef = doc(db, "users", phone);
 
@@ -62,10 +66,13 @@ export default function ProfilePage() {
     window.location.href = "/categories";
   };
 
+  /* ------------------------------------------
+        NOT LOGGED IN
+  ------------------------------------------- */
   if (!phone) {
     return (
-      <div className="pt-32 px-6 text-white">
-        <h1 className="text-3xl font-bold">Profile</h1>
+      <div className="pt-32 px-6 text-white text-center">
+        <h1 className="text-3xl font-bold text-[#16FF6E]">Profile</h1>
         <p className="mt-3 text-gray-300">
           Please login first to update your profile.
         </p>
@@ -73,21 +80,30 @@ export default function ProfilePage() {
     );
   }
 
+  /* ------------------------------------------
+        LOADING UI
+  ------------------------------------------- */
   if (loading)
     return (
       <div className="pt-32 px-6 text-white">Loading Profile...</div>
     );
 
+  /* ------------------------------------------
+        MAIN PROFILE UI
+  ------------------------------------------- */
   return (
     <div className="text-white pt-32 flex flex-col items-center gap-5 px-6">
-      <h1 className="text-3xl font-bold text-[#16FF6E]">Your Profile</h1>
+      <h1 className="text-3xl font-bold text-[#16FF6E] mb-2">Your Profile</h1>
+      <p className="text-gray-400 text-sm mb-4">
+        Please fill accurate details — helps partners trust you.
+      </p>
 
       <input
         type="text"
         placeholder="Full Name"
         value={name}
         onChange={(e) => setName(e.target.value)}
-        className="p-3 rounded text-black w-72"
+        className="neon-input w-72"
       />
 
       <input
@@ -95,7 +111,7 @@ export default function ProfilePage() {
         placeholder="City"
         value={city}
         onChange={(e) => setCity(e.target.value)}
-        className="p-3 rounded text-black w-72"
+        className="neon-input w-72"
       />
 
       <input
@@ -103,7 +119,7 @@ export default function ProfilePage() {
         placeholder="State"
         value={state}
         onChange={(e) => setState(e.target.value)}
-        className="p-3 rounded text-black w-72"
+        className="neon-input w-72"
       />
 
       <input
@@ -111,12 +127,12 @@ export default function ProfilePage() {
         placeholder="Country"
         value={country}
         onChange={(e) => setCountry(e.target.value)}
-        className="p-3 rounded text-black w-72"
+        className="neon-input w-72"
       />
 
       <button
         onClick={saveProfile}
-        className="bg-[#16FF6E] text-black px-6 py-3 rounded-xl font-bold"
+        className="bg-[#16FF6E] text-black px-6 py-3 rounded-xl font-bold hover:bg-white transition-all"
       >
         Save Profile
       </button>
