@@ -25,13 +25,14 @@ export default function AdminPage() {
        AUTO LOGIN
   ---------------------------- */
   useEffect(() => {
+    if (typeof window === "undefined") return;
     if (localStorage.getItem("isAdmin") === "true") {
       setAuthorized(true);
     }
   }, []);
 
   /* ----------------------------
-       FETCH GROUPS (FULL FIX)
+       FETCH GROUPS (FAST + SAFE)
   ---------------------------- */
   useEffect(() => {
     if (!authorized) return;
@@ -40,47 +41,57 @@ export default function AdminPage() {
     const ref = collection(db, "groups");
 
     const unsubscribe = onSnapshot(ref, async (snap) => {
-      const list: any[] = [];
+      const docs = snap.docs;
 
-      for (const g of snap.docs) {
-        const data = g.data() as any;
+      // Build all groups in parallel
+      const builtGroups = await Promise.all(
+        docs.map(async (gDoc) => {
+          const data = gDoc.data() as any;
 
-        /* ------------------------------------
-            AUTO DELETE EMPTY GROUPS
-        ------------------------------------ */
-        if (!data.members || data.members.length === 0) {
-          await deleteDoc(doc(db, "groups", g.id));
-          console.log("Auto-deleted empty group:", g.id);
-          continue;
-        }
+          // 🔥 AUTO DELETE EMPTY OR CORRUPTED GROUPS
+          if (!Array.isArray(data.members) || data.members.length === 0) {
+            await deleteDoc(gDoc.ref);
+            console.log("Auto-deleted empty group:", gDoc.id);
+            return null;
+          }
 
-        /* ------------------------------------
-            BUILD MEMBER DETAILS
-        ------------------------------------ */
-        const membersDetailed: any[] = [];
-        for (const phone of data.members || []) {
-          const cleanPhone = (phone as string).trim();
+          // Clean member phones
+          const cleanedMembers: string[] = (data.members || []).map(
+            (m: string) =>
+              typeof m === "string" ? m.trim() : String(m ?? "")
+          );
 
-          const userRef = doc(db, "users", cleanPhone);
-          const userSnap = await getDoc(userRef);
+          // Parallel user lookups (faster)
+          const userDocs = await Promise.all(
+            cleanedMembers.map((phone: string) =>
+              getDoc(doc(db, "users", phone))
+            )
+          );
 
-          membersDetailed.push({
-            phone: cleanPhone,
-            name: userSnap.exists() ? userSnap.data()?.name : "Unknown User",
-          });
-        }
+          const membersDetailed = userDocs.map((uSnap, idx) => ({
+            phone: cleanedMembers[idx],
+            name: uSnap.exists()
+              ? ((uSnap.data() as any)?.name ?? "Unknown User")
+              : "Unknown User",
+          }));
 
-        list.push({
-          id: g.id,
-          ...data,
-          members: data.members?.map((p: string) => p.trim()) || [],
-          membersDetailed,
-        });
-      }
+          return {
+            id: gDoc.id,
+            ...data,
+            members: cleanedMembers,
+            membersCount:
+              typeof data.membersCount === "number"
+                ? data.membersCount
+                : cleanedMembers.length,
+            membersDetailed,
+          };
+        })
+      );
 
-      /* ------------------------------------
-            MANUAL SORTING (createdAt safe)
-      ------------------------------------ */
+      // Remove nulls (deleted groups)
+      const list = builtGroups.filter((g): g is any => g !== null);
+
+      // Manual sorting (safe if createdAt missing)
       list.sort((a, b) => {
         const ta = a.createdAt?.seconds || 0;
         const tb = b.createdAt?.seconds || 0;
@@ -97,7 +108,7 @@ export default function AdminPage() {
   /* ----------------------------
        LOGIN
   ---------------------------- */
-  const loginAdmin = (e: any) => {
+  const loginAdmin = (e: React.FormEvent) => {
     e.preventDefault();
     if (usernameInput === ADMIN_USERNAME && passwordInput === ADMIN_PASSWORD) {
       localStorage.setItem("isAdmin", "true");
@@ -125,7 +136,7 @@ export default function AdminPage() {
   };
 
   /* ----------------------------
-       DELETE GROUP
+       DELETE GROUP (MANUAL)
   ---------------------------- */
   const deleteGroup = async (id: string) => {
     if (!confirm("Delete this group?")) return;
@@ -134,7 +145,7 @@ export default function AdminPage() {
   };
 
   /* ----------------------------
-       REMOVE MEMBER (Updated)
+       REMOVE MEMBER (AUTO DELETE IF LAST)
   ---------------------------- */
   const removeMember = async (groupId: string, phone: string) => {
     if (!confirm("Remove this member?")) return;
@@ -148,15 +159,17 @@ export default function AdminPage() {
       const data = snap.data() as any;
 
       const members: string[] = (data.members || []).map((p: string) =>
-        p.trim()
+        typeof p === "string" ? p.trim() : String(p ?? "")
       );
 
-      const filtered = members.filter((p) => p !== phone.trim());
+      const filtered = members.filter(
+        (p: string) => p !== phone.trim()
+      );
 
       const newCount = filtered.length;
-      const required = data.requiredSize;
+      const required = data.requiredSize ?? filtered.length;
 
-      /* Auto delete group if empty */
+      // If no members left → delete the group
       if (newCount === 0) {
         await deleteDoc(gRef);
         alert("Group deleted (no members left).");
@@ -199,8 +212,8 @@ export default function AdminPage() {
 
     const encoded = encodeURIComponent(message);
 
-    g.members.forEach((p: string) => {
-      const waNumber = "91" + p.trim();
+    g.members.forEach((phone: string) => {
+      const waNumber = "91" + String(phone).trim();
       window.open(`https://wa.me/${waNumber}?text=${encoded}`);
     });
   };
