@@ -20,15 +20,15 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* ========== SIDEBAR BUTTON ========== */}
+      {/* SIDEBAR BUTTON (RIGHT SIDE) */}
       <button
         onClick={() => setOpen(true)}
-        className="fixed top-6 left-4 z-50 bg-[#16FF6E] text-black px-3 py-2 rounded-md shadow-lg font-bold"
+        className="fixed top-6 right-4 z-50 bg-[#16FF6E] text-black px-3 py-2 rounded-md shadow-lg font-bold"
       >
         ☰
       </button>
 
-      {/* ========== OVERLAY ========== */}
+      {/* OVERLAY */}
       {open && (
         <div
           onClick={() => setOpen(false)}
@@ -36,10 +36,10 @@ export default function Sidebar() {
         />
       )}
 
-      {/* ========== SIDEBAR PANEL ========== */}
+      {/* SIDEBAR (RIGHT PANEL) */}
       <div
-        className={`fixed top-0 left-0 h-full w-64 bg-black border-r border-[#16FF6E]/30 z-50 p-6 transform transition-all ${
-          open ? "translate-x-0" : "-translate-x-full"
+        className={`fixed top-0 right-0 h-full w-72 bg-black border-l border-[#16FF6E]/30 z-50 p-6 transform transition-all ${
+          open ? "translate-x-0" : "translate-x-full"
         }`}
       >
         <h2 className="text-xl font-bold text-[#16FF6E] mb-6">Menu</h2>
@@ -68,40 +68,46 @@ export default function Sidebar() {
             </Link>
           )}
 
-          {/* DETAILS */}
+          {/* NAVIGATION LINKS */}
           <Link
-            href="/info"
+            href="/"
             className="text-gray-200 hover:text-[#16FF6E]"
             onClick={() => setOpen(false)}
           >
-            📄 My Details / Info
+            🏠 Home
           </Link>
 
-          {/* ABOUT */}
           <Link
-            href="/about"
+            href="/categories"
             className="text-gray-200 hover:text-[#16FF6E]"
             onClick={() => setOpen(false)}
           >
-            ℹ️ About Project
+            🛍 Categories
           </Link>
 
-          {/* HELP */}
+          <Link
+            href="/dashboard"
+            className="text-gray-200 hover:text-[#16FF6E]"
+            onClick={() => setOpen(false)}
+          >
+            🤝 My Matches
+          </Link>
+
+          {/* EXTRA PAGES */}
           <Link
             href="/help"
             className="text-gray-200 hover:text-[#16FF6E]"
             onClick={() => setOpen(false)}
           >
-            ❓ How Splitting Works
+            ❓ How It Works
           </Link>
 
-          {/* AI CHAT */}
           <Link
             href="/ai"
             className="text-gray-200 hover:text-[#16FF6E]"
             onClick={() => setOpen(false)}
           >
-            🤖 AI Chat
+            🤖 AI Assistant
           </Link>
 
           {/* LOGOUT */}
@@ -117,7 +123,7 @@ export default function Sidebar() {
             </button>
           )}
 
-          {/* HIDDEN ADMIN BUTTON */}
+          {/* ADMIN (Hidden) */}
           <button
             onClick={() => (window.location.href = "/admin")}
             className="text-[10px] text-gray-500 opacity-20 text-left hover:opacity-100"

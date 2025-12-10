@@ -7,7 +7,7 @@ const links = [
   { href: "/", label: "Home" },
   { href: "/categories", label: "Categories" },
   { href: "/dashboard", label: "My Matches" },
-  { href: "/admin", label: "Admin" },
+  { href: "/profile", label: "Profile" },
 ];
 
 export default function Navbar() {
@@ -44,7 +44,7 @@ export default function Navbar() {
             );
           })}
 
-          {/* LOGIN BUTTON FIXED */}
+          {/* LOGIN BUTTON */}
           <Link
             href="/login"
             className="ml-3 rounded-full border border-[#16FF6E]/40 bg-black/60 px-3 py-1 text-xs font-medium text-[#16FF6E] shadow-[0_0_10px_rgba(22,255,110,0.4)] hover:border-[#16FF6E]"
