@@ -4,7 +4,6 @@ import "./globals.css";
 
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
-import FloatingTopMenu from "./components/FloatingTopMenu";
 
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { useEffect } from "react";
@@ -67,7 +66,6 @@ export default function RootLayout({ children }: any) {
           <Navbar />
 
           {/* Floating Quick Menu (Home, Categories, MyMatches, Profile) */}
-          <FloatingTopMenu />
 
           {/* Right-side Sidebar (hamburger menu) */}
           <Sidebar />
