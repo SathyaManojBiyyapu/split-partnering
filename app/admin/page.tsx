@@ -31,7 +31,7 @@ export default function AdminPage() {
   }, []);
 
   /* ----------------------------
-       FETCH GROUPS (FIXED)
+       FETCH GROUPS (FULL FIX)
   ---------------------------- */
   useEffect(() => {
     if (!authorized) return;
@@ -39,13 +39,24 @@ export default function AdminPage() {
     setLoading(true);
     const ref = collection(db, "groups");
 
-    // ❗ NO orderBy — we sort manually
     const unsubscribe = onSnapshot(ref, async (snap) => {
       const list: any[] = [];
 
       for (const g of snap.docs) {
         const data = g.data() as any;
 
+        /* ------------------------------------
+            AUTO DELETE EMPTY GROUPS
+        ------------------------------------ */
+        if (!data.members || data.members.length === 0) {
+          await deleteDoc(doc(db, "groups", g.id));
+          console.log("Auto-deleted empty group:", g.id);
+          continue;
+        }
+
+        /* ------------------------------------
+            BUILD MEMBER DETAILS
+        ------------------------------------ */
         const membersDetailed: any[] = [];
         for (const phone of data.members || []) {
           const cleanPhone = (phone as string).trim();
@@ -67,7 +78,9 @@ export default function AdminPage() {
         });
       }
 
-      // 📌 Manual sorting (handles missing createdAt)
+      /* ------------------------------------
+            MANUAL SORTING (createdAt safe)
+      ------------------------------------ */
       list.sort((a, b) => {
         const ta = a.createdAt?.seconds || 0;
         const tb = b.createdAt?.seconds || 0;
@@ -121,7 +134,7 @@ export default function AdminPage() {
   };
 
   /* ----------------------------
-       REMOVE MEMBER (updated)
+       REMOVE MEMBER (Updated)
   ---------------------------- */
   const removeMember = async (groupId: string, phone: string) => {
     if (!confirm("Remove this member?")) return;
@@ -137,15 +150,18 @@ export default function AdminPage() {
       const members: string[] = (data.members || []).map((p: string) =>
         p.trim()
       );
+
       const filtered = members.filter((p) => p !== phone.trim());
 
-      const currentCount =
-        data.membersCount !== undefined
-          ? data.membersCount
-          : members.length;
-
-      const newCount = Math.max(0, currentCount - 1);
+      const newCount = filtered.length;
       const required = data.requiredSize;
+
+      /* Auto delete group if empty */
+      if (newCount === 0) {
+        await deleteDoc(gRef);
+        alert("Group deleted (no members left).");
+        return;
+      }
 
       await updateDoc(gRef, {
         members: filtered,
@@ -354,7 +370,6 @@ export default function AdminPage() {
                   Delete Group
                 </button>
               </div>
-
             </div>
           ))}
         </div>

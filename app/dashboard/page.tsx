@@ -11,6 +11,7 @@ import {
   getDoc,
   doc,
   updateDoc,
+  deleteDoc,
   arrayRemove,
   DocumentData,
 } from "firebase/firestore";
@@ -39,7 +40,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   /* ------------------------------------------------
-        FETCH LATEST SELECTION (this is correct)
+        FETCH LATEST SELECTION
   ------------------------------------------------ */
   useEffect(() => {
     if (!phone) {
@@ -79,9 +80,7 @@ export default function DashboardPage() {
   }, [phone]);
 
   /* ------------------------------------------------
-        FETCH ALL MATCH GROUPS (FIXED)
-        ❌ removed orderBy("createdAt")
-        ✔ manual sorting added
+        FETCH ALL GROUPS (NO orderBy)
   ------------------------------------------------ */
   useEffect(() => {
     if (!phone) return;
@@ -108,7 +107,7 @@ export default function DashboardPage() {
         });
       });
 
-      // 🔥 FIX: Sort manually so old groups without createdAt also work
+      // Manual sorting
       list.sort(
         (a, b) =>
           (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)
@@ -121,7 +120,7 @@ export default function DashboardPage() {
   }, [phone]);
 
   /* ------------------------------------------------
-        DELETE MATCH
+        DELETE MATCH (AUTO DELETE WHEN EMPTY)
   ------------------------------------------------ */
   const deleteMatch = async (groupId: string) => {
     if (!confirm("Remove this match?")) return;
@@ -130,15 +129,28 @@ export default function DashboardPage() {
     try {
       const gRef = doc(db, "groups", groupId);
       const snap = await getDoc(gRef);
+
+      if (!snap.exists()) return;
+
       const data = snap.data() as any;
 
+      const members = (data.members || []).map((p: string) => p.trim());
       const currentCount =
-        data?.membersCount ?? (data?.members?.length ?? 0);
+        data.membersCount ?? (data.members ? data.members.length : 0);
 
+      const newCount = Math.max(0, currentCount - 1);
+
+      // Remove user from group
       await updateDoc(gRef, {
         members: arrayRemove(phone),
-        membersCount: Math.max(0, currentCount - 1),
+        membersCount: newCount,
       });
+
+      // 🔥 AUTO DELETE GROUP IF EMPTY
+      if (newCount === 0) {
+        await deleteDoc(gRef);
+        console.log("🗑 Group deleted because no members left");
+      }
 
       alert("Match removed successfully");
     } catch (err) {
