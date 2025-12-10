@@ -60,22 +60,18 @@ const GROUP_SIZE: Record<string, number> = {
 const getRequiredSize = (opt: string) => GROUP_SIZE[opt] || 2;
 
 /* -----------------------------------------
-   CREATE OR JOIN GROUP
+   CREATE OR JOIN GROUP (FIXED)
 ------------------------------------------*/
-async function createOrJoinGroup(
-  category: string,
-  option: string,
-  rawPhone: string
-) {
+async function createOrJoinGroup(category: string, option: string, rawPhone: string) {
   const cleanPhone = rawPhone.trim();
 
   const groupsRef = collection(db, "groups");
 
+  // 🚀 FIX: Remove status filter → allow joining ANY unfilled group
   const q = query(
     groupsRef,
     where("category", "==", category),
-    where("option", "==", option),
-    where("status", "==", "waiting")
+    where("option", "==", option)
   );
 
   const snap = await getDocs(q);
@@ -85,6 +81,7 @@ async function createOrJoinGroup(
     const members: string[] = g.members || [];
     const required = g.requiredSize || getRequiredSize(option);
 
+    // Already inside group
     if (members.includes(cleanPhone)) {
       return {
         status: "already",
@@ -92,6 +89,7 @@ async function createOrJoinGroup(
       };
     }
 
+    // Join if space left
     if (members.length < required) {
       const gRef = doc(db, "groups", gdoc.id);
 
@@ -103,6 +101,7 @@ async function createOrJoinGroup(
       const updated = (await getDoc(gRef)).data() as any;
       const updatedMembers = updated.members || [];
 
+      // Mark ready
       if (updatedMembers.length >= required) {
         await updateDoc(gRef, {
           status: "ready",
@@ -117,6 +116,7 @@ async function createOrJoinGroup(
     }
   }
 
+  // Create a NEW group
   const newGroupRef = doc(groupsRef);
   const required = getRequiredSize(option);
 
@@ -127,7 +127,7 @@ async function createOrJoinGroup(
     membersCount: 1,
     requiredSize: required,
     status: required === 1 ? "ready" : "waiting",
-    createdAt: serverTimestamp(),
+    createdAt: serverTimestamp(), // ALWAYS set createdAt
   });
 
   return {
@@ -158,7 +158,7 @@ function SaveContent() {
 
   const [userName, setUserName] = useState<string | null>(null);
 
-  /* BLOCK GUEST + REQUIRE LOGIN */
+  /* REQUIRE LOGIN */
   useEffect(() => {
     if (isGuest) {
       alert("Guest mode cannot save partner. Please login.");
@@ -190,7 +190,7 @@ function SaveContent() {
     fetchUser();
   }, [phone]);
 
-  /* SAVE PARTNER */
+  /* SAVE PARTNER (FULLY FIXED) */
   const savePartner = async () => {
     if (!phone) return alert("Login required.");
 
@@ -199,7 +199,7 @@ function SaveContent() {
     try {
       const result = await createOrJoinGroup(category, option, cleanPhone);
 
-      // Ensure user exists in users collection (for admin panel)
+      // Ensure user exists
       const userRef = doc(db, "users", cleanPhone);
       const userSnap = await getDoc(userRef);
 
@@ -211,16 +211,14 @@ function SaveContent() {
         });
       }
 
-      // Avoid duplicate selections if already in the group
-      if (result.status !== "already") {
-        await addDoc(collection(db, "selections"), {
-          phone: cleanPhone,
-          userName,
-          category,
-          option,
-          createdAt: serverTimestamp(),
-        });
-      }
+      // ALWAYS log selection (needed for multiple matches)
+      await addDoc(collection(db, "selections"), {
+        phone: cleanPhone,
+        userName,
+        category,
+        option,
+        createdAt: serverTimestamp(), // ALWAYS add createdAt
+      });
 
       alert(
         `Partner saved!\n\nStatus: ${result.status}\nMembers: ${result.membersCount}/${getRequiredSize(

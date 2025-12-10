@@ -4,8 +4,6 @@ import { useEffect, useState } from "react";
 import { db } from "@/firebase/config";
 import {
   collection,
-  query,
-  orderBy,
   onSnapshot,
   doc,
   updateDoc,
@@ -23,26 +21,26 @@ export default function AdminPage() {
   const [groups, setGroups] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  /* ------------------------------------------
+  /* ----------------------------
        AUTO LOGIN
-  ------------------------------------------ */
+  ---------------------------- */
   useEffect(() => {
     if (localStorage.getItem("isAdmin") === "true") {
       setAuthorized(true);
     }
   }, []);
 
-  /* ------------------------------------------
-       FETCH GROUPS
-  ------------------------------------------ */
+  /* ----------------------------
+       FETCH GROUPS (FIXED)
+  ---------------------------- */
   useEffect(() => {
     if (!authorized) return;
 
     setLoading(true);
     const ref = collection(db, "groups");
-    const q = query(ref, orderBy("createdAt", "desc"));
 
-    const unsubscribe = onSnapshot(q, async (snap) => {
+    // ❗ NO orderBy — we sort manually
+    const unsubscribe = onSnapshot(ref, async (snap) => {
       const list: any[] = [];
 
       for (const g of snap.docs) {
@@ -69,6 +67,13 @@ export default function AdminPage() {
         });
       }
 
+      // 📌 Manual sorting (handles missing createdAt)
+      list.sort((a, b) => {
+        const ta = a.createdAt?.seconds || 0;
+        const tb = b.createdAt?.seconds || 0;
+        return tb - ta;
+      });
+
       setGroups(list);
       setLoading(false);
     });
@@ -76,9 +81,9 @@ export default function AdminPage() {
     return () => unsubscribe();
   }, [authorized]);
 
-  /* ------------------------------------------
-       ADMIN LOGIN
-  ------------------------------------------ */
+  /* ----------------------------
+       LOGIN
+  ---------------------------- */
   const loginAdmin = (e: any) => {
     e.preventDefault();
     if (usernameInput === ADMIN_USERNAME && passwordInput === ADMIN_PASSWORD) {
@@ -89,35 +94,35 @@ export default function AdminPage() {
     }
   };
 
-  /* ------------------------------------------
-       ADMIN LOGOUT
-  ------------------------------------------ */
+  /* ----------------------------
+       LOGOUT
+  ---------------------------- */
   const adminLogout = () => {
     localStorage.removeItem("isAdmin");
     setAuthorized(false);
     alert("Logged out of admin panel.");
   };
 
-  /* ------------------------------------------
+  /* ----------------------------
        MARK COMPLETED
-  ------------------------------------------ */
+  ---------------------------- */
   const markCompleted = async (id: string) => {
     await updateDoc(doc(db, "groups", id), { status: "completed" });
     alert("✔ Group marked completed");
   };
 
-  /* ------------------------------------------
-       DELETE ENTIRE GROUP
-  ------------------------------------------ */
+  /* ----------------------------
+       DELETE GROUP
+  ---------------------------- */
   const deleteGroup = async (id: string) => {
     if (!confirm("Delete this group?")) return;
     await deleteDoc(doc(db, "groups", id));
     alert("❌ Deleted Group");
   };
 
-  /* ------------------------------------------
-       REMOVE A MEMBER (and update status)
-  ------------------------------------------ */
+  /* ----------------------------
+       REMOVE MEMBER (updated)
+  ---------------------------- */
   const removeMember = async (groupId: string, phone: string) => {
     if (!confirm("Remove this member?")) return;
 
@@ -140,7 +145,7 @@ export default function AdminPage() {
           : members.length;
 
       const newCount = Math.max(0, currentCount - 1);
-      const required = data.requiredSize || filtered.length;
+      const required = data.requiredSize;
 
       await updateDoc(gRef, {
         members: filtered,
@@ -155,18 +160,18 @@ export default function AdminPage() {
     }
   };
 
-  /* ------------------------------------------
+  /* ----------------------------
        EXPORT CSV
-  ------------------------------------------ */
+  ---------------------------- */
   const exportCSV = (g: any) => {
     const csv = (g.members || []).join(",");
     const blob = new Blob([csv], { type: "text/csv" });
     window.open(URL.createObjectURL(blob));
   };
 
-  /* ------------------------------------------
-       WHATSAPP ALL
-  ------------------------------------------ */
+  /* ----------------------------
+       WHATSAPP FUNCTIONS
+  ---------------------------- */
   const contactAll = (g: any) => {
     if (!g.members?.length) return alert("No numbers available.");
 
@@ -184,9 +189,6 @@ export default function AdminPage() {
     });
   };
 
-  /* ------------------------------------------
-       WHATSAPP ONE
-  ------------------------------------------ */
   const contactOne = (g: any) => {
     if (!g.members.length) return alert("No numbers");
 
@@ -206,9 +208,9 @@ export default function AdminPage() {
     window.open(`https://wa.me/${waNumber}?text=${encoded}`);
   };
 
-  /* ------------------------------------------
-       LOGIN SCREEN
-  ------------------------------------------ */
+  /* ----------------------------
+       LOGIN UI
+  ---------------------------- */
   if (!authorized) {
     return (
       <div className="pt-32 text-white flex flex-col items-center">
@@ -238,9 +240,9 @@ export default function AdminPage() {
     );
   }
 
-  /* ------------------------------------------
-       ADMIN DASHBOARD
-  ------------------------------------------ */
+  /* ----------------------------
+       ADMIN DASHBOARD UI
+  ---------------------------- */
   return (
     <div className="pt-28 px-6 text-white">
       <div className="flex items-center justify-between mb-6">
@@ -352,6 +354,7 @@ export default function AdminPage() {
                   Delete Group
                 </button>
               </div>
+
             </div>
           ))}
         </div>

@@ -6,7 +6,6 @@ import {
   collection,
   query,
   where,
-  orderBy,
   onSnapshot,
   getDocs,
   getDoc,
@@ -40,7 +39,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   /* ------------------------------------------------
-        FETCH LATEST SELECTION
+        FETCH LATEST SELECTION (this is correct)
   ------------------------------------------------ */
   useEffect(() => {
     if (!phone) {
@@ -51,16 +50,18 @@ export default function DashboardPage() {
     const loadLatest = async () => {
       try {
         const selRef = collection(db, "selections");
-        const qSel = query(
-          selRef,
-          where("phone", "==", phone),
-          orderBy("createdAt", "desc")
-        );
+        const qSel = query(selRef, where("phone", "==", phone));
 
         const snap = await getDocs(qSel);
 
         if (!snap.empty) {
-          const last = snap.docs[0].data() as DocumentData;
+          const sorted = snap.docs.sort(
+            (a, b) =>
+              (b.data().createdAt?.seconds || 0) -
+              (a.data().createdAt?.seconds || 0)
+          );
+
+          const last = sorted[0].data() as DocumentData;
 
           setLatestSelection({
             category: last.category,
@@ -78,36 +79,40 @@ export default function DashboardPage() {
   }, [phone]);
 
   /* ------------------------------------------------
-        FETCH USER GROUPS (LIVE)
+        FETCH ALL MATCH GROUPS (FIXED)
+        ❌ removed orderBy("createdAt")
+        ✔ manual sorting added
   ------------------------------------------------ */
   useEffect(() => {
     if (!phone) return;
 
     const groupsRef = collection(db, "groups");
-    const qGroups = query(
-      groupsRef,
-      where("members", "array-contains", phone),
-      orderBy("createdAt", "desc")
-    );
+    const qGroups = query(groupsRef, where("members", "array-contains", phone));
 
     const unsub = onSnapshot(qGroups, (snapshot) => {
       const list: Group[] = [];
 
       snapshot.forEach((docSnap) => {
         const data = docSnap.data() as any;
-        const cleanMembers = (data.members || []).map((p: string) => p.trim());
 
         list.push({
           id: docSnap.id,
           category: data.category,
           option: data.option,
-          members: cleanMembers,
-          membersCount: data.membersCount ?? cleanMembers.length,
+          members: (data.members || []).map((p: string) => p.trim()),
+          membersCount:
+            data.membersCount ?? (data.members ? data.members.length : 0),
           requiredSize: data.requiredSize,
           status: data.status,
           createdAt: data.createdAt,
         });
       });
+
+      // 🔥 FIX: Sort manually so old groups without createdAt also work
+      list.sort(
+        (a, b) =>
+          (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)
+      );
 
       setMatches(list);
     });

@@ -10,6 +10,7 @@ export default function Sidebar() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+
     if (localStorage.getItem("loggedIn") === "true") setLoggedIn(true);
     if (localStorage.getItem("guest") === "true") setGuest(true);
   }, []);
@@ -21,10 +22,10 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* TOGGLE BUTTON (RIGHT TOP) */}
+      {/* SIDEBAR TOGGLE BUTTON (RIGHT TOP) */}
       <button
         onClick={() => setOpen(true)}
-        className="fixed top-6 right-4 z-50 bg-[#16FF6E] text-black px-3 py-2 rounded-md shadow-lg font-bold"
+        className="fixed top-5 right-4 z-50 bg-[#16FF6E] text-black px-3 py-2 rounded-md shadow-lg font-bold"
       >
         ☰
       </button>
@@ -37,69 +38,73 @@ export default function Sidebar() {
         />
       )}
 
-      {/* SIDEBAR PANEL (RIGHT) */}
+      {/* RIGHT-SIDE PANEL */}
       <div
-        className={`fixed top-0 right-0 h-full w-72 bg-black border-l border-[#16FF6E]/30 z-50 p-6 transform transition-all ${
+        className={`fixed top-0 right-0 h-full w-72 bg-black border-l border-[#16FF6E]/30 z-50 p-6 transform transition-all duration-300 ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
       >
+        {/* HEADER */}
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-[#16FF6E]">Menu</h2>
-          <button onClick={() => setOpen(false)} className="text-gray-400">
+          <button
+            onClick={() => setOpen(false)}
+            className="text-gray-400 hover:text-white text-xl"
+          >
             ✕
           </button>
         </div>
 
+        {/* MENU LINKS */}
         <div className="flex flex-col gap-4 text-sm">
 
-          {/* MAIN LINKS */}
           <Link
             href="/"
-            className="text-gray-200 hover:text-[#16FF6E]"
             onClick={() => setOpen(false)}
+            className="text-gray-200 hover:text-[#16FF6E]"
           >
             🏠 Home
           </Link>
 
           <Link
             href="/categories"
-            className="text-gray-200 hover:text-[#16FF6E]"
             onClick={() => setOpen(false)}
+            className="text-gray-200 hover:text-[#16FF6E]"
           >
             🛍 Categories
           </Link>
 
           <Link
             href="/dashboard"
-            className="text-gray-200 hover:text-[#16FF6E]"
             onClick={() => setOpen(false)}
+            className="text-gray-200 hover:text-[#16FF6E]"
           >
             🤝 My Matches
           </Link>
 
+          {/* PROFILE ONLY IF LOGGED IN */}
           {(loggedIn || guest) && (
             <Link
               href="/profile"
-              className="text-gray-200 hover:text-[#16FF6E]"
               onClick={() => setOpen(false)}
+              className="text-gray-200 hover:text-[#16FF6E]"
             >
               👤 My Profile
             </Link>
           )}
 
-          {/* HELP / AI */}
           <Link
             href="/help"
-            className="text-gray-200 hover:text-[#16FF6E]"
             onClick={() => setOpen(false)}
+            className="text-gray-200 hover:text-[#16FF6E]"
           >
             ❓ How Splitting Works
           </Link>
 
           <Link
             href="/ai"
-            className="text-gray-200 hover:text-[#16FF6E]"
             onClick={() => setOpen(false)}
+            className="text-gray-200 hover:text-[#16FF6E]"
           >
             🤖 AI Chat
           </Link>
@@ -108,8 +113,8 @@ export default function Sidebar() {
           {!loggedIn && !guest && (
             <Link
               href="/login"
-              className="text-gray-200 hover:text-[#16FF6E]"
               onClick={() => setOpen(false)}
+              className="text-gray-200 hover:text-[#16FF6E]"
             >
               🔐 Login / Signup
             </Link>
