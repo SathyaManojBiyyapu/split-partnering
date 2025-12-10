@@ -9,42 +9,46 @@ import {
   orderBy,
   onSnapshot,
   getDocs,
+  getDoc,
   doc,
   updateDoc,
   DocumentData,
+  arrayRemove,
 } from "firebase/firestore";
-import { arrayRemove } from "firebase/firestore";
 
 type Group = {
   id: string;
   category: string;
   option: string;
+  members: string[];
   membersCount: number;
   requiredSize: number;
-  status: string; // waiting | ready | completed
+  status: string;
   createdAt?: any;
 };
 
 export default function DashboardPage() {
+  const rawPhone =
+    typeof window !== "undefined" ? localStorage.getItem("phone") : null;
+
+  const phone = rawPhone ? rawPhone.trim() : null;
+
   const [latestSelection, setLatestSelection] =
     useState<{ category: string; option: string } | null>(null);
 
   const [matches, setMatches] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const phone =
-    typeof window !== "undefined" ? localStorage.getItem("phone") : null;
-
-  /* ------------------------------------------------
-        FETCH USER'S MOST RECENT SELECTION
-  ------------------------------------------------ */
+  /* -----------------------------------------
+        FETCH LATEST SELECTION
+  ------------------------------------------*/
   useEffect(() => {
     if (!phone) {
       setLoading(false);
       return;
     }
 
-    const fetchLastSelection = async () => {
+    const loadLast = async () => {
       try {
         const selRef = collection(db, "selections");
         const qSel = query(
@@ -56,14 +60,12 @@ export default function DashboardPage() {
         const snap = await getDocs(qSel);
 
         if (!snap.empty) {
-          const lastDoc = snap.docs[snap.docs.length - 1].data() as DocumentData;
+          const last = snap.docs[snap.docs.length - 1].data() as DocumentData;
 
           setLatestSelection({
-            category: lastDoc.category,
-            option: lastDoc.option,
+            category: last.category,
+            option: last.option,
           });
-        } else {
-          setLatestSelection(null);
         }
       } catch (err) {
         console.error("Selection fetch error:", err);
@@ -72,12 +74,12 @@ export default function DashboardPage() {
       setLoading(false);
     };
 
-    fetchLastSelection();
+    loadLast();
   }, [phone]);
 
-  /* ------------------------------------------------
-        FETCH ALL GROUPS THE USER IS IN
-  ------------------------------------------------ */
+  /* -----------------------------------------
+        FETCH ALL GROUPS (LIVE)
+  ------------------------------------------*/
   useEffect(() => {
     if (!phone) return;
 
@@ -88,34 +90,52 @@ export default function DashboardPage() {
       orderBy("createdAt", "desc")
     );
 
-    const unsubscribe = onSnapshot(qGroups, (snapshot) => {
-      let list: any[] = [];
+    const unsub = onSnapshot(qGroups, (snapshot) => {
+      const list: Group[] = [];
 
       snapshot.forEach((docSnap) => {
-        const data = docSnap.data();
+        const data = docSnap.data() as any;
+
+        const membersClean = (data.members || []).map((p: string) =>
+          p.trim()
+        );
+
         list.push({
           id: docSnap.id,
-          ...data,
+          category: data.category,
+          option: data.option,
+          members: membersClean,
+          membersCount: data.membersCount ?? membersClean.length,
+          requiredSize: data.requiredSize,
+          status: data.status,
+          createdAt: data.createdAt,
         });
       });
 
       setMatches(list);
     });
 
-    return () => unsubscribe();
+    return () => unsub();
   }, [phone]);
 
-  /* ------------------------------------------------
-        DELETE MATCH (remove user from group)
-  ------------------------------------------------ */
+  /* -----------------------------------------
+        DELETE MATCH
+  ------------------------------------------*/
   const deleteMatch = async (groupId: string) => {
     if (!confirm("Remove this match?")) return;
     if (!phone) return;
 
     try {
       const gRef = doc(db, "groups", groupId);
+      const snap = await getDoc(gRef);
+      const data = snap.data() as any;
+
+      const currentCount =
+        data?.membersCount ?? (data?.members?.length ?? 0);
+
       await updateDoc(gRef, {
         members: arrayRemove(phone),
+        membersCount: Math.max(0, currentCount - 1),
       });
 
       alert("Match removed successfully");
@@ -125,9 +145,9 @@ export default function DashboardPage() {
     }
   };
 
-  /* ------------------------------------------------
-        1️⃣ USER NOT LOGGED IN
-  ------------------------------------------------ */
+  /* -----------------------------------------
+        NOT LOGGED IN
+  ------------------------------------------*/
   if (!phone) {
     return (
       <div className="pt-32 px-6 text-white">
@@ -139,9 +159,9 @@ export default function DashboardPage() {
     );
   }
 
-  /* ------------------------------------------------
-        2️⃣ LOADING
-  ------------------------------------------------ */
+  /* -----------------------------------------
+        LOADING
+  ------------------------------------------*/
   if (loading) {
     return (
       <div className="pt-32 px-6 text-white">
@@ -151,29 +171,25 @@ export default function DashboardPage() {
     );
   }
 
-  /* ------------------------------------------------
-        3️⃣ MAIN DASHBOARD
-  ------------------------------------------------ */
+  /* -----------------------------------------
+        UI
+  ------------------------------------------*/
   return (
     <div className="pt-32 px-6 text-white">
       <h1 className="text-3xl font-bold text-[#16FF6E]">My Partners</h1>
 
-      {/* LATEST SELECTION (your old UI) */}
       {latestSelection && (
         <p className="text-gray-300 mt-4">
           Latest selection:{" "}
           <span className="text-[#16FF6E] font-bold">
-            {latestSelection.category.replace("-", " ")} →{" "}
+            {latestSelection.category.replace("-", " ")} →
             {latestSelection.option}
           </span>
         </p>
       )}
 
-      {/* NO MATCHES */}
       {matches.length === 0 ? (
-        <p className="text-gray-400 mt-4">
-          You have not saved any partner yet.
-        </p>
+        <p className="text-gray-400 mt-4">No partners saved yet.</p>
       ) : (
         <div className="mt-8 space-y-4 max-w-xl">
           {matches.map((group) => (

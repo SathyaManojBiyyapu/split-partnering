@@ -23,12 +23,18 @@ export default function AdminPage() {
   const [groups, setGroups] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  /* ------------------------------------------
+       AUTO LOGIN
+  ------------------------------------------ */
   useEffect(() => {
     if (localStorage.getItem("isAdmin") === "true") {
       setAuthorized(true);
     }
   }, []);
 
+  /* ------------------------------------------
+       FETCH GROUPS
+  ------------------------------------------ */
   useEffect(() => {
     if (!authorized) return;
 
@@ -44,16 +50,23 @@ export default function AdminPage() {
 
         const membersDetailed: any[] = [];
         for (const phone of data.members || []) {
-          const userRef = doc(db, "users", phone);
+          const cleanPhone = phone.trim();
+
+          const userRef = doc(db, "users", cleanPhone);
           const userSnap = await getDoc(userRef);
 
           membersDetailed.push({
-            phone,
+            phone: cleanPhone,
             name: userSnap.exists() ? userSnap.data().name : "Unknown User",
           });
         }
 
-        list.push({ id: g.id, ...data, membersDetailed });
+        list.push({
+          id: g.id,
+          ...data,
+          members: data.members?.map((p: string) => p.trim()) || [],
+          membersDetailed,
+        });
       }
 
       setGroups(list);
@@ -63,6 +76,9 @@ export default function AdminPage() {
     return () => unsubscribe();
   }, [authorized]);
 
+  /* ------------------------------------------
+       ADMIN LOGIN
+  ------------------------------------------ */
   const loginAdmin = (e: any) => {
     e.preventDefault();
     if (usernameInput === ADMIN_USERNAME && passwordInput === ADMIN_PASSWORD) {
@@ -73,39 +89,97 @@ export default function AdminPage() {
     }
   };
 
+  /* ------------------------------------------
+       ADMIN LOGOUT
+  ------------------------------------------ */
+  const adminLogout = () => {
+    localStorage.removeItem("isAdmin");
+    setAuthorized(false);
+    alert("Logged out of admin panel.");
+  };
+
+  /* ------------------------------------------
+       MARK COMPLETED
+  ------------------------------------------ */
   const markCompleted = async (id: string) => {
     await updateDoc(doc(db, "groups", id), { status: "completed" });
     alert("✔ Group marked completed");
   };
 
+  /* ------------------------------------------
+       DELETE ENTIRE GROUP
+  ------------------------------------------ */
   const deleteGroup = async (id: string) => {
     if (!confirm("Delete this group?")) return;
     await deleteDoc(doc(db, "groups", id));
-    alert("❌ Deleted");
+    alert("❌ Deleted Group");
   };
 
+  /* ------------------------------------------
+       REMOVE A MEMBER (FIXED)
+  ------------------------------------------ */
+  const removeMember = async (groupId: string, phone: string) => {
+    if (!confirm("Remove this member?")) return;
+
+    try {
+      const gRef = doc(db, "groups", groupId);
+      const snap = await getDoc(gRef);
+
+      if (!snap.exists()) return alert("Group missing.");
+
+      const data = snap.data() as any;
+
+      const currentCount =
+        data.membersCount !== undefined
+          ? data.membersCount
+          : data.members?.length || 0;
+
+      const newCount = Math.max(0, currentCount - 1);
+
+      await updateDoc(gRef, {
+        members: data.members.filter((p: string) => p.trim() !== phone),
+        membersCount: newCount,
+      });
+
+      alert("Member removed.");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to remove member.");
+    }
+  };
+
+  /* ------------------------------------------
+       EXPORT CSV
+  ------------------------------------------ */
   const exportCSV = (g: any) => {
     const csv = (g.members || []).join(",");
     const blob = new Blob([csv], { type: "text/csv" });
     window.open(URL.createObjectURL(blob));
   };
 
+  /* ------------------------------------------
+       WHATSAPP ALL
+  ------------------------------------------ */
   const contactAll = (g: any) => {
-    if (!g.members?.length) return alert("No numbers");
+    if (!g.members?.length) return alert("No numbers available.");
 
     const message =
       `👋 *Split Partnering Update*\n\n` +
       `Your group for *${g.category} → ${g.option}* is ready.\n` +
       `Members: ${g.membersCount}/${g.requiredSize}\n\n` +
-      `Admin will coordinate next steps.`;
+      `Admin will coordinate next steps.\n`;
 
     const encoded = encodeURIComponent(message);
 
     g.members.forEach((p: string) => {
-      window.open(`https://wa.me/${p.replace("+", "")}?text=${encoded}`);
+      const waNumber = "91" + p.trim();
+      window.open(`https://wa.me/${waNumber}?text=${encoded}`);
     });
   };
 
+  /* ------------------------------------------
+       WHATSAPP ONE
+  ------------------------------------------ */
   const contactOne = (g: any) => {
     if (!g.members.length) return alert("No numbers");
 
@@ -114,12 +188,20 @@ export default function AdminPage() {
     );
     if (!choice) return;
 
-    if (!g.members.includes(choice)) return alert("Not in group");
+    const clean = choice.trim();
+
+    if (!g.members.includes(clean))
+      return alert("This number is not a member in this group.");
 
     const encoded = encodeURIComponent("Hello! Your group is active.");
-    window.open(`https://wa.me/${choice}?text=${encoded}`);
+    const waNumber = "91" + clean;
+
+    window.open(`https://wa.me/${waNumber}?text=${encoded}`);
   };
 
+  /* ------------------------------------------
+       LOGIN SCREEN
+  ------------------------------------------ */
   if (!authorized) {
     return (
       <div className="pt-32 text-white flex flex-col items-center">
@@ -149,9 +231,32 @@ export default function AdminPage() {
     );
   }
 
+  /* ------------------------------------------
+       ADMIN DASHBOARD
+  ------------------------------------------ */
   return (
     <div className="pt-28 px-6 text-white">
-      <h1 className="text-3xl font-bold text-[#16FF6E]">Admin — Partner Groups</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-bold text-[#16FF6E]">
+          Admin — Partner Groups
+        </h1>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => (window.location.href = "/")}
+            className="px-3 py-1 bg-gray-700 rounded text-xs"
+          >
+            Home
+          </button>
+
+          <button
+            onClick={adminLogout}
+            className="px-3 py-1 bg-red-600 rounded text-xs"
+          >
+            Logout
+          </button>
+        </div>
+      </div>
 
       {loading ? (
         <p className="mt-4 text-gray-400">Loading…</p>
@@ -192,7 +297,13 @@ export default function AdminPage() {
                 <ul className="ml-4 mt-2 list-disc">
                   {g.membersDetailed.map((m: any, i: number) => (
                     <li key={i}>
-                      {m.name} — {m.phone}
+                      {m.name} — {m.phone}  
+                      <button
+                        onClick={() => removeMember(g.id, m.phone)}
+                        className="ml-2 px-2 py-1 bg-red-600 rounded text-xs"
+                      >
+                        Remove
+                      </button>
                     </li>
                   ))}
                 </ul>
@@ -231,7 +342,7 @@ export default function AdminPage() {
                   className="px-3 py-1 bg-red-600 rounded text-sm"
                   onClick={() => deleteGroup(g.id)}
                 >
-                  Delete
+                  Delete Group
                 </button>
               </div>
             </div>

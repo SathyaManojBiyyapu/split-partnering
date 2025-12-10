@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { db } from "@/firebase/config";
 import {
   addDoc,
@@ -18,15 +18,12 @@ import {
 } from "firebase/firestore";
 
 /* -----------------------------------------
-   GROUP SIZE LOGIC FOR EACH SUB-OPTION
+   GROUP SIZE
 ------------------------------------------*/
 const GROUP_SIZE: Record<string, number> = {
-  // GYM
   split: 2,
   pass: 2,
   supplements: 3,
-
-  // FASHION
   "peter-england": 2,
   "louis-philippe": 2,
   unlimited: 2,
@@ -37,32 +34,18 @@ const GROUP_SIZE: Record<string, number> = {
   hm: 2,
   nike: 2,
   adidas: 2,
-
-  // MOVIES
   "save-ticket": 2,
   "bulk-ticket": 2,
-
-  // LENSKART
   splitbuy: 2,
   "lens-split": 2,
-
-  // LOCAL TRAVEL
   car: 4,
   bike: 2,
-
-  // EVENTS
   "couple-entry": 2,
   "group-save": 4,
-
-  // COUPONS
   "best-deals": 2,
   "gift-card": 2,
-
-  // VILLAS
   room: 6,
   weekend: 4,
-
-  // BOOKS
   java: 2,
   python: 2,
   c: 2,
@@ -74,16 +57,16 @@ const GROUP_SIZE: Record<string, number> = {
   "previous-papers": 2,
 };
 
-// fallback size = 2
 const getRequiredSize = (opt: string) => GROUP_SIZE[opt] || 2;
 
 /* -----------------------------------------
    CREATE OR JOIN GROUP
 ------------------------------------------*/
-async function createOrJoinGroup(category: string, option: string, phone: string) {
+async function createOrJoinGroup(category: string, option: string, rawPhone: string) {
+  const cleanPhone = rawPhone.trim();
+
   const groupsRef = collection(db, "groups");
 
-  // find a waiting group
   const q = query(
     groupsRef,
     where("category", "==", category),
@@ -98,28 +81,24 @@ async function createOrJoinGroup(category: string, option: string, phone: string
     const members: string[] = g.members || [];
     const required = g.requiredSize || getRequiredSize(option);
 
-    // already in this group
-    if (members.includes(phone)) {
+    if (members.includes(cleanPhone)) {
       return {
-        status: "joined",
-        groupId: gdoc.id,
+        status: "already",
         membersCount: members.length,
       };
     }
 
-    // has space
     if (members.length < required) {
       const gRef = doc(db, "groups", gdoc.id);
 
       await updateDoc(gRef, {
-        members: arrayUnion(phone),
+        members: arrayUnion(cleanPhone),
         membersCount: members.length + 1,
       });
 
       const updated = (await getDoc(gRef)).data() as any;
       const updatedMembers = updated.members || [];
 
-      // check if full
       if (updatedMembers.length >= required) {
         await updateDoc(gRef, {
           status: "ready",
@@ -129,122 +108,137 @@ async function createOrJoinGroup(category: string, option: string, phone: string
 
       return {
         status: "joined",
-        groupId: gdoc.id,
         membersCount: updatedMembers.length,
       };
     }
   }
 
-  // create new group
   const newGroupRef = doc(groupsRef);
   const required = getRequiredSize(option);
 
   await setDoc(newGroupRef, {
     category,
     option,
-    members: [phone],
+    members: [cleanPhone],
     membersCount: 1,
     requiredSize: required,
     status: required === 1 ? "ready" : "waiting",
     createdAt: serverTimestamp(),
   });
 
-  return { status: "created", groupId: newGroupRef.id, membersCount: 1 };
+  return {
+    status: "created",
+    membersCount: 1,
+  };
 }
 
 /* -----------------------------------------
-   PAGE CONTENT
+   SAVE CONTENT UI
 ------------------------------------------*/
 function SaveContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
 
   const category = searchParams.get("category") || "";
   const option = searchParams.get("option") || "";
 
-  const phone =
+  const rawPhone =
+    typeof window !== "undefined" ? localStorage.getItem("phone") : null;
+
+  const phone: string | null = rawPhone ? rawPhone.trim() : null;
+
+  const isGuest =
     typeof window !== "undefined"
-      ? localStorage.getItem("phone") || "unknown"
-      : "unknown";
+      ? localStorage.getItem("guest") === "true"
+      : false;
 
   const [userName, setUserName] = useState<string | null>(null);
 
-  // Load profile name
+  /* BLOCK GUEST */
   useEffect(() => {
-    const loadProfile = async () => {
-      if (!phone) return;
+    if (isGuest) {
+      alert("Guest mode cannot save partner. Please login.");
+      router.push("/login");
+    }
 
-      try {
-        const userRef = doc(db, "users", phone);
-        const snap = await getDoc(userRef);
+    if (!phone) {
+      router.push("/login");
+    }
+  }, [isGuest, phone, router]);
 
-        if (snap.exists()) {
-          setUserName((snap.data() as any).name || null);
-        }
-      } catch (err) {
-        console.error("Load profile error:", err);
+  /* LOAD USER NAME */
+  useEffect(() => {
+    if (!phone) return;
+
+    const fetchUser = async () => {
+      const userRef = doc(db, "users", phone);
+      const snap = await getDoc(userRef);
+
+      if (snap.exists()) {
+        setUserName((snap.data() as any).name || null);
       }
     };
 
-    loadProfile();
+    fetchUser();
   }, [phone]);
 
-  /* -----------------------------------------
-     SAVE PARTNER
-  ------------------------------------------*/
+  /* SAVE PARTNER */
   const savePartner = async () => {
-    if (!phone || phone === "unknown")
-      return alert("Please login with OTP first.");
+    if (!phone) return alert("Login required.");
+
+    const cleanPhone = phone.trim();
 
     try {
-      // save Selection
+      const result = await createOrJoinGroup(category, option, cleanPhone);
+
       await addDoc(collection(db, "selections"), {
-        phone,
+        phone: cleanPhone,
         userName,
         category,
         option,
         createdAt: serverTimestamp(),
       });
 
-      // create/join group
-      const result = await createOrJoinGroup(category, option, phone);
-
       alert(
-        `Partner saved!\nStatus: ${result.status}\nPartners: ${result.membersCount}/${getRequiredSize(
+        `Partner saved!\n\nStatus: ${result.status}\nMembers: ${result.membersCount}/${getRequiredSize(
           option
         )}`
       );
 
-      window.location.href = "/dashboard";
+      router.push("/categories");
     } catch (err) {
-      console.error("Save error:", err);
-      alert("Saving failed! Try again.");
+      console.error(err);
+      alert("Saving failed.");
     }
   };
 
   return (
     <div className="min-h-screen pt-28 px-6 text-white">
-      <h1 className="text-3xl font-bold text-[#16FF6E] mb-6">
-        {category.replace("-", " ").toUpperCase()} → {option.toUpperCase()}
-      </h1>
+      <h1 className="text-3xl font-bold text-[#16FF6E] mb-6">Make Your Match</h1>
 
-      <p className="text-gray-300 mb-8">
-        You selected <strong>{option}</strong> in{" "}
+      <p className="text-gray-300 mb-4">
+        You selected <strong>{option}</strong> under{" "}
         <strong>{category.replace("-", " ")}</strong>
       </p>
 
       <button
         onClick={savePartner}
-        className="px-6 py-3 bg-[#16FF6E] text-black rounded-xl hover:bg-white font-bold transition-all"
+        className="px-6 py-3 bg-[#16FF6E] text-black rounded-xl hover:bg-white font-bold transition-all mt-4"
       >
         Save Partner
+      </button>
+
+      <button
+        onClick={() => router.push("/categories")}
+        className="mt-6 text-[#16FF6E] underline text-sm"
+      >
+        ← Back to Categories
       </button>
     </div>
   );
 }
 
-/* -----------------------------------------
-   EXPORT WRAPPER
-------------------------------------------*/
+/* WRAPPER */
 export default function SavePage() {
   return (
     <Suspense fallback={<p className="text-white p-10">Loading...</p>}>

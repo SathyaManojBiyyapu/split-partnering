@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
-const categoryOptions: Record<string, { name: string; slug: string; description: string; emoji: string }[]> = {
+const categoryOptions: Record<
+  string,
+  { name: string; slug: string; description: string; emoji: string }[]
+> = {
   gym: [
     { name: "Split Membership", slug: "split", description: "Share a gym membership with a partner", emoji: "💪" },
     { name: "Day Pass", slug: "pass", description: "Split a day pass", emoji: "🎫" },
@@ -50,9 +53,9 @@ const categoryOptions: Record<string, { name: string; slug: string; description:
     { name: "Python", slug: "python", description: "Split Python books", emoji: "🐍" },
     { name: "C Programming", slug: "c", description: "Share C programming books", emoji: "📖" },
     { name: "DSA", slug: "dsa", description: "Split Data Structures books", emoji: "📊" },
-    { name: "OOPs", slug: "oops", description: "Share Object-Oriented Programming books", emoji: "🔷" },
+    { name: "OOPs", slug: "oops", description: "Share OOPs study materials", emoji: "🔷" },
     { name: "Computer Networks", slug: "cn", description: "Split CN study materials", emoji: "🌐" },
-    { name: "DBMS", slug: "dbms", description: "Share Database Management books", emoji: "🗄️" },
+    { name: "DBMS", slug: "dbms", description: "Share DBMS books", emoji: "🗄️" },
     { name: "Operating Systems", slug: "os", description: "Split OS study materials", emoji: "💻" },
     { name: "Previous Papers", slug: "previous-papers", description: "Share previous exam papers", emoji: "📝" },
   ],
@@ -90,8 +93,8 @@ export default function OptionsPage() {
 
   return (
     <div className="min-h-screen pt-32 px-6 text-white">
-      <h1 className="text-3xl font-bold text-[#16FF6E] mb-2">{categoryName} Options</h1>
-      <p className="text-gray-400 mb-8">Choose an option to find your partner</p>
+      <h1 className="text-3xl font-bold text-[#16FF6E] mb-2">{categoryName}</h1>
+      <p className="text-gray-400 mb-8">Make your first match by choosing an option</p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
         {options.map((option) => (
