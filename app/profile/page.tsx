@@ -9,6 +9,8 @@ export default function ProfilePage() {
   const [city, setCity] = useState("");
   const [stateVal, setStateVal] = useState("");
   const [country, setCountry] = useState("");
+  const [pincode, setPincode] = useState("");
+  const [address, setAddress] = useState("");
   const [loading, setLoading] = useState(true);
 
   const phone =
@@ -37,6 +39,8 @@ export default function ProfilePage() {
         setCity(data.city || "");
         setStateVal(data.state || "");
         setCountry(data.country || "");
+        setPincode(data.pincode || "");
+        setAddress(data.address || "");
       }
 
       setLoading(false);
@@ -65,6 +69,8 @@ export default function ProfilePage() {
         city,
         state: stateVal,
         country,
+        pincode,
+        address,
         updatedAt: new Date(),
       },
       { merge: true }
@@ -111,14 +117,20 @@ export default function ProfilePage() {
   ------------------------------------------- */
   return (
     <div className="text-white pt-32 flex flex-col items-center gap-5 px-6">
+      <h1 className="text-3xl font-bold text-[#16FF6E] mb-1">
+        Your Profile
+      </h1>
 
-      <h1 className="text-3xl font-bold text-[#16FF6E] mb-1">Your Profile</h1>
-
-      {/* 🔒 PLATFORM ROLE STATEMENT (NEW) */}
+      {/* PLATFORM ROLE STATEMENT */}
       <div className="max-w-md text-center text-xs text-gray-400 mb-2">
-        SplitPartnering is a <span className="text-[#16FF6E] font-semibold">partnering service</span>.
-        We help people find partners to share costs and access group benefits.
-        We do <span className="text-red-400">not</span> buy or sell any products or services.
+        SplitPartnering is a{" "}
+        <span className="text-[#16FF6E] font-semibold">
+          partnering service
+        </span>
+        . We help people find partners to share costs and access group benefits.
+        We do{" "}
+        <span className="text-red-400">not</span> buy or sell any products or
+        services.
       </div>
 
       <p className="text-gray-400 text-sm mb-2">
@@ -172,6 +184,23 @@ export default function ProfilePage() {
         disabled={guest}
       />
 
+      <input
+        type="text"
+        placeholder="Pincode"
+        value={pincode}
+        onChange={(e) => setPincode(e.target.value)}
+        className="neon-input w-72"
+        disabled={guest}
+      />
+
+      <textarea
+        placeholder="Address"
+        value={address}
+        onChange={(e) => setAddress(e.target.value)}
+        className="neon-input w-72 h-20 resize-none"
+        disabled={guest}
+      />
+
       {/* SAVE BUTTON */}
       {!guest && (
         <button
@@ -182,10 +211,11 @@ export default function ProfilePage() {
         </button>
       )}
 
-      {/* TRUST NOTE (NEW) */}
+      {/* TRUST NOTE */}
       <div className="max-w-md text-center text-[11px] text-gray-400 mt-2">
         Your details help us suggest better partners in your city.
-        Payments and purchases always happen directly between partners and providers.
+        Payments and purchases always happen directly between partners and
+        providers.
       </div>
 
       {/* LOGOUT BUTTON */}
@@ -196,7 +226,7 @@ export default function ProfilePage() {
         Logout
       </button>
 
-      {/* HIDDEN ADMIN BUTTON */}
+      {/* ADMIN */}
       <button
         onClick={() => (window.location.href = "/admin")}
         className="text-[10px] opacity-20 mt-1"
