@@ -14,7 +14,9 @@ export default function ProfilePage() {
   const phone =
     typeof window !== "undefined" ? localStorage.getItem("phone") : null;
   const guest =
-    typeof window !== "undefined" ? localStorage.getItem("guest") === "true" : false;
+    typeof window !== "undefined"
+      ? localStorage.getItem("guest") === "true"
+      : false;
 
   /* ------------------------------------------
         FETCH PROFILE VALUES
@@ -112,10 +114,17 @@ export default function ProfilePage() {
 
       <h1 className="text-3xl font-bold text-[#16FF6E] mb-1">Your Profile</h1>
 
+      {/* 🔒 PLATFORM ROLE STATEMENT (NEW) */}
+      <div className="max-w-md text-center text-xs text-gray-400 mb-2">
+        SplitPartnering is a <span className="text-[#16FF6E] font-semibold">partnering service</span>.
+        We help people find partners to share costs and access group benefits.
+        We do <span className="text-red-400">not</span> buy or sell any products or services.
+      </div>
+
       <p className="text-gray-400 text-sm mb-2">
         {guest
           ? "Guest Mode: You can browse, but cannot save details."
-          : "Update your details. Helps partners trust you."}
+          : "Keep your profile accurate. Partners trust verified details."}
       </p>
 
       {/* PHONE DISPLAY */}
@@ -172,6 +181,12 @@ export default function ProfilePage() {
           Save Profile
         </button>
       )}
+
+      {/* TRUST NOTE (NEW) */}
+      <div className="max-w-md text-center text-[11px] text-gray-400 mt-2">
+        Your details help us suggest better partners in your city.
+        Payments and purchases always happen directly between partners and providers.
+      </div>
 
       {/* LOGOUT BUTTON */}
       <button
