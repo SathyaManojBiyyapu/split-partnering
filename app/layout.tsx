@@ -4,10 +4,28 @@ import "./globals.css";
 
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
+import Footer from "./components/Footer";
 
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
+
+import { Inter, Playfair_Display } from "next/font/google";
+
+/* =========================
+   FONTS (INVESTOR GRADE)
+========================= */
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-body",
+  display: "swap",
+});
+
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-heading",
+  display: "swap",
+});
 
 function AuthGuard({ children }: any) {
   const { user, loading } = useAuth();
@@ -32,7 +50,10 @@ function AuthGuard({ children }: any) {
       pathname === "/login" ||
       pathname.startsWith("/help") ||
       pathname.startsWith("/ai") ||
-      pathname.startsWith("/categories")
+      pathname.startsWith("/categories") ||
+      pathname.startsWith("/investors") ||
+      pathname.startsWith("/team") ||
+      pathname.startsWith("/contact")
     ) {
       return;
     }
@@ -57,23 +78,27 @@ function AuthGuard({ children }: any) {
 
 export default function RootLayout({ children }: any) {
   return (
-    <html lang="en">
-      <body className="bg-black text-white">
+    <html
+      lang="en"
+      className={`${inter.variable} ${playfair.variable}`}
+    >
+      <body className="bg-dark-section text-white font-body">
 
         <AuthProvider>
 
           {/* Top Navigation */}
           <Navbar />
 
-          {/* Floating Quick Menu (Home, Categories, MyMatches, Profile) */}
-
-          {/* Right-side Sidebar (hamburger menu) */}
+          {/* Right-side Sidebar (Mobile) */}
           <Sidebar />
 
           {/* Page Content */}
-          <div className="pt-0">
+          <main className="pt-0">
             <AuthGuard>{children}</AuthGuard>
-          </div>
+          </main>
+
+          {/* Global Footer */}
+          <Footer />
 
         </AuthProvider>
 

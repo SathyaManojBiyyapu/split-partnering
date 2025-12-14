@@ -28,29 +28,29 @@ export default function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-30 border-b border-[#16FF6E]/30 bg-black/70 backdrop-blur">
+    <header className="sticky top-0 z-30 border-b border-dark-card bg-dark-section/80 backdrop-blur">
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
 
         {/* LOGO */}
-        <Link href="/" className="flex items-center gap-2">
-          <span className="h-3 w-3 rounded-full bg-[#16FF6E] shadow-[0_0_15px_#16FF6E]" />
-          <span className="text-lg font-semibold tracking-wide">
-            split<span className="text-[#16FF6E]">partnering</span>
+        <Link href="/" className="flex items-center gap-3">
+          <span className="h-3 w-3 rounded-full bg-gold-primary" />
+          <span className="font-heading text-lg tracking-wide">
+            Partner<span className="text-gold-primary">Sync</span>
           </span>
         </Link>
 
         {/* LINKS + LOGIN/LOGOUT */}
-        <div className="flex items-center gap-4 text-sm">
+        <div className="flex items-center gap-3 text-sm font-body">
           {links.map((link) => {
             const isActive = pathname === link.href;
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`px-3 py-1 rounded-full transition ${
+                className={`px-3 py-1.5 rounded-full transition ${
                   isActive
-                    ? "bg-[#16FF6E] text-black shadow-[0_0_15px_#16FF6E]"
-                    : "text-gray-300 hover:text-white hover:bg-white/5"
+                    ? "bg-gold-primary text-black"
+                    : "text-text-muted hover:text-white hover:bg-white/5"
                 }`}
               >
                 {link.label}
@@ -62,7 +62,7 @@ export default function Navbar() {
           {!loggedIn && !guest && (
             <Link
               href="/login"
-              className="ml-2 rounded-full border border-[#16FF6E]/40 bg-black/60 px-3 py-1 text-xs font-medium text-[#16FF6E] shadow-[0_0_10px_rgba(22,255,110,0.4)] hover:border-[#16FF6E]"
+              className="ml-2 rounded-full border border-gold-primary px-3 py-1.5 text-xs font-medium text-gold-primary hover:bg-gold-primary hover:text-black transition"
             >
               Login / OTP
             </Link>
@@ -72,7 +72,7 @@ export default function Navbar() {
           {(loggedIn || guest) && (
             <button
               onClick={logout}
-              className="ml-2 rounded-full border border-red-500/40 bg-red-600/20 px-3 py-1 text-xs font-medium text-red-400 hover:bg-red-600/30 hover:border-red-500 transition"
+              className="ml-2 rounded-full border border-red-500/40 bg-red-600/10 px-3 py-1.5 text-xs font-medium text-red-400 hover:bg-red-600/20 hover:border-red-500 transition"
             >
               Logout
             </button>

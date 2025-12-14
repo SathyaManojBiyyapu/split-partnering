@@ -22,10 +22,13 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* SIDEBAR TOGGLE BUTTON (RIGHT TOP) */}
+      {/* SIDEBAR TOGGLE BUTTON */}
       <button
         onClick={() => setOpen(true)}
-        className="fixed top-5 right-4 z-50 bg-[#16FF6E] text-black px-3 py-2 rounded-md shadow-lg font-bold"
+        className="fixed top-4 right-3 sm:top-5 sm:right-4 z-50
+                   rounded-md px-3 py-2 font-bold
+                   bg-gold-primary text-black shadow-lg
+                   hover:bg-gold-soft transition"
       >
         ☰
       </button>
@@ -34,34 +37,38 @@ export default function Sidebar() {
       {open && (
         <div
           onClick={() => setOpen(false)}
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
         />
       )}
 
       {/* RIGHT-SIDE PANEL */}
       <div
-        className={`fixed top-0 right-0 h-full w-72 bg-black border-l border-[#16FF6E]/30 z-50 p-6 transform transition-all duration-300 ${
-          open ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={`fixed top-0 right-0 h-full z-50 p-6
+          w-[85vw] sm:w-72
+          bg-dark-section border-l border-dark-card
+          transform transition-all duration-300
+          ${open ? "translate-x-0" : "translate-x-full"}`}
       >
         {/* HEADER */}
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-[#16FF6E]">Menu</h2>
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="font-heading text-lg sm:text-xl text-gold-primary">
+            Menu
+          </h2>
           <button
             onClick={() => setOpen(false)}
-            className="text-gray-400 hover:text-white text-xl"
+            className="text-text-muted hover:text-white text-xl transition"
           >
             ✕
           </button>
         </div>
 
         {/* MENU LINKS */}
-        <div className="flex flex-col gap-4 text-sm">
+        <div className="flex flex-col gap-5 text-sm font-body">
 
           <Link
             href="/"
             onClick={() => setOpen(false)}
-            className="text-gray-200 hover:text-[#16FF6E]"
+            className="text-text-body hover:text-gold-primary transition"
           >
             🏠 Home
           </Link>
@@ -69,7 +76,7 @@ export default function Sidebar() {
           <Link
             href="/categories"
             onClick={() => setOpen(false)}
-            className="text-gray-200 hover:text-[#16FF6E]"
+            className="text-text-body hover:text-gold-primary transition"
           >
             🛍 Categories
           </Link>
@@ -77,17 +84,25 @@ export default function Sidebar() {
           <Link
             href="/dashboard"
             onClick={() => setOpen(false)}
-            className="text-gray-200 hover:text-[#16FF6E]"
+            className="text-text-body hover:text-gold-primary transition"
           >
             🤝 My Matches
           </Link>
 
-          {/* PROFILE ONLY IF LOGGED IN */}
+          {/* INVESTORS */}
+          <Link
+            href="/investors"
+            onClick={() => setOpen(false)}
+            className="text-text-body hover:text-gold-primary transition"
+          >
+            💼 Investors
+          </Link>
+
           {(loggedIn || guest) && (
             <Link
               href="/profile"
               onClick={() => setOpen(false)}
-              className="text-gray-200 hover:text-[#16FF6E]"
+              className="text-text-body hover:text-gold-primary transition"
             >
               👤 My Profile
             </Link>
@@ -96,46 +111,48 @@ export default function Sidebar() {
           <Link
             href="/help"
             onClick={() => setOpen(false)}
-            className="text-gray-200 hover:text-[#16FF6E]"
+            className="text-text-body hover:text-gold-primary transition"
           >
-            ❓ How Splitting Works
+            ❓ How it works
           </Link>
 
           <Link
             href="/ai"
             onClick={() => setOpen(false)}
-            className="text-gray-200 hover:text-[#16FF6E]"
+            className="text-text-body hover:text-gold-primary transition"
           >
             🤖 AI Chat
           </Link>
 
-          {/* LOGIN / LOGOUT */}
+          {/* LOGIN */}
           {!loggedIn && !guest && (
             <Link
               href="/login"
               onClick={() => setOpen(false)}
-              className="text-gray-200 hover:text-[#16FF6E]"
+              className="text-text-body hover:text-gold-primary transition"
             >
               🔐 Login / Signup
             </Link>
           )}
 
+          {/* LOGOUT */}
           {(loggedIn || guest) && (
             <button
               onClick={() => {
                 setOpen(false);
                 logout();
               }}
-              className="text-red-400 hover:text-red-300 text-left"
+              className="text-red-400 hover:text-red-300 text-left transition"
             >
               🚪 Logout
             </button>
           )}
 
-          {/* HIDDEN ADMIN LINK */}
+          {/* HIDDEN ADMIN */}
           <button
             onClick={() => (window.location.href = "/admin")}
-            className="text-[10px] text-gray-500 opacity-20 text-left hover:opacity-100 mt-4"
+            className="text-[10px] text-text-muted opacity-20 text-left
+                       hover:opacity-100 transition mt-8"
           >
             admin panel
           </button>

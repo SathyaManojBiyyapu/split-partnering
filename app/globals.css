@@ -4,25 +4,96 @@
 @tailwind components;
 @tailwind utilities;
 
+/* =========================
+   ROOT VARIABLES (INVESTOR)
+========================= */
 :root {
-  --bg: #000000;
-  --neon: #16FF6E;
-  --neon-soft: #a3ffbf;
+  --bg-main: #050505;
+  --bg-section: #0B0B0B;
+  --bg-card: #111111;
+
+  --gold-primary: #D4AF37;
+  --gold-soft: #E6C97A;
+
+  --text-heading: #E6C97A;
+  --text-body: #CFCFCF;
+  --text-muted: #8A8A8A;
 }
 
-body {
-  @apply min-h-screen text-white;
-  background: radial-gradient(circle at top, #003000, #000000 75%);
-  color: var(--neon-soft);
+/* =========================
+   BASE STYLES
+========================= */
+@layer base {
+  body {
+    @apply min-h-screen antialiased;
+    background: radial-gradient(
+      circle at top,
+      rgba(212, 175, 55, 0.08),
+      var(--bg-main) 60%
+    );
+    color: var(--text-body);
+    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
+      "Segoe UI", Roboto, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5 {
+    color: var(--text-heading);
+    font-family: "Playfair Display", Georgia, serif;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  p {
+    color: var(--text-body);
+    line-height: 1.7;
+  }
+
+  small, .muted {
+    color: var(--text-muted);
+  }
 }
-.neon-input {
-  @apply p-3 rounded-lg w-full
-         bg-black/40 text-[#16FF6E]
-         placeholder-gray-400
-         border border-[#16FF6E]/50
-         focus:border-[#16FF6E]
-         focus:ring-2 focus:ring-[#16FF6E]
-         shadow-[0_0_10px_rgba(22,255,110,0.4)]
-         focus:shadow-[0_0_15px_rgba(22,255,110,0.8)]
-         outline-none transition;
+
+/* =========================
+   BUTTONS
+========================= */
+@layer components {
+  .btn-primary {
+    @apply px-6 py-3 rounded-lg font-semibold transition;
+    background-color: var(--gold-primary);
+    color: #0B0B0B;
+  }
+
+  .btn-primary:hover {
+    background-color: var(--gold-soft);
+  }
+
+  .btn-outline {
+    @apply px-6 py-3 rounded-lg font-medium border transition;
+    border-color: var(--gold-primary);
+    color: var(--gold-primary);
+  }
+
+  .btn-outline:hover {
+    background-color: var(--gold-primary);
+    color: #0B0B0B;
+  }
+}
+
+/* =========================
+   INPUTS (CLEAN, NO NEON)
+========================= */
+@layer components {
+  .input {
+    @apply p-3 rounded-lg w-full bg-transparent border outline-none transition;
+    border-color: #1F1F1F;
+    color: var(--text-body);
+  }
+
+  .input::placeholder {
+    color: var(--text-muted);
+  }
+
+  .input:focus {
+    border-color: var(--gold-primary);
+  }
 }
