@@ -22,13 +22,18 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* SIDEBAR TOGGLE BUTTON */}
+      {/* SIDEBAR TOGGLE BUTTON (VISIBLE GOLD ICON) */}
       <button
         onClick={() => setOpen(true)}
-        className="fixed top-4 right-3 sm:top-5 sm:right-4 z-50
-                   rounded-md px-3 py-2 font-bold
-                   bg-gold-primary text-black shadow-lg
-                   hover:bg-gold-soft transition"
+        className="
+          fixed top-4 right-3 sm:top-5 sm:right-4 z-50
+          rounded-md px-3 py-2 font-bold text-lg
+          bg-black text-gold-primary
+          border border-gold-primary
+          shadow-[0_0_18px_rgba(212,175,55,0.9)]
+          hover:bg-gold-primary hover:text-black
+          transition
+        "
       >
         ☰
       </button>
@@ -56,7 +61,7 @@ export default function Sidebar() {
           </h2>
           <button
             onClick={() => setOpen(false)}
-            className="text-text-muted hover:text-white text-xl transition"
+            className="text-text-muted hover:text-gold-primary text-xl transition"
           >
             ✕
           </button>
@@ -89,7 +94,6 @@ export default function Sidebar() {
             🤝 My Matches
           </Link>
 
-          {/* INVESTORS */}
           <Link
             href="/investors"
             onClick={() => setOpen(false)}
@@ -124,7 +128,6 @@ export default function Sidebar() {
             🤖 AI Chat
           </Link>
 
-          {/* LOGIN */}
           {!loggedIn && !guest && (
             <Link
               href="/login"
@@ -135,7 +138,6 @@ export default function Sidebar() {
             </Link>
           )}
 
-          {/* LOGOUT */}
           {(loggedIn || guest) && (
             <button
               onClick={() => {
@@ -148,7 +150,7 @@ export default function Sidebar() {
             </button>
           )}
 
-          {/* HIDDEN ADMIN */}
+          {/* ADMIN */}
           <button
             onClick={() => (window.location.href = "/admin")}
             className="text-[10px] text-text-muted opacity-20 text-left
