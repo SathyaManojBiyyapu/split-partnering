@@ -10,7 +10,6 @@ export default function Sidebar() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-
     if (localStorage.getItem("loggedIn") === "true") setLoggedIn(true);
     if (localStorage.getItem("guest") === "true") setGuest(true);
   }, []);
@@ -22,17 +21,20 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* SIDEBAR TOGGLE BUTTON (VISIBLE GOLD ICON) */}
+      {/* ===== SIDEBAR TOGGLE BUTTON (FIXED & GLOWING) ===== */}
       <button
         onClick={() => setOpen(true)}
+        aria-label="Open menu"
         className="
-          fixed top-4 right-3 sm:top-5 sm:right-4 z-50
-          rounded-md px-3 py-2 font-bold text-lg
-          bg-black text-gold-primary
+          fixed top-3 right-3 sm:top-4 sm:right-4 z-50
+          h-11 w-11 flex items-center justify-center
+          rounded-lg
+          bg-black text-gold-primary text-xl font-bold
           border border-gold-primary
-          shadow-[0_0_18px_rgba(212,175,55,0.9)]
+          shadow-[0_0_22px_rgba(212,175,55,0.95)]
           hover:bg-gold-primary hover:text-black
-          transition
+          hover:shadow-[0_0_35px_rgba(212,175,55,1)]
+          transition-all duration-200
         "
       >
         ☰
@@ -70,70 +72,46 @@ export default function Sidebar() {
         {/* MENU LINKS */}
         <div className="flex flex-col gap-5 text-sm font-body">
 
-          <Link
-            href="/"
-            onClick={() => setOpen(false)}
-            className="text-text-body hover:text-gold-primary transition"
-          >
+          <Link href="/" onClick={() => setOpen(false)}
+            className="text-text-body hover:text-gold-primary transition">
             🏠 Home
           </Link>
 
-          <Link
-            href="/categories"
-            onClick={() => setOpen(false)}
-            className="text-text-body hover:text-gold-primary transition"
-          >
+          <Link href="/categories" onClick={() => setOpen(false)}
+            className="text-text-body hover:text-gold-primary transition">
             🛍 Categories
           </Link>
 
-          <Link
-            href="/dashboard"
-            onClick={() => setOpen(false)}
-            className="text-text-body hover:text-gold-primary transition"
-          >
+          <Link href="/dashboard" onClick={() => setOpen(false)}
+            className="text-text-body hover:text-gold-primary transition">
             🤝 My Matches
           </Link>
 
-          <Link
-            href="/investors"
-            onClick={() => setOpen(false)}
-            className="text-text-body hover:text-gold-primary transition"
-          >
+          <Link href="/investors" onClick={() => setOpen(false)}
+            className="text-text-body hover:text-gold-primary transition">
             💼 Investors
           </Link>
 
           {(loggedIn || guest) && (
-            <Link
-              href="/profile"
-              onClick={() => setOpen(false)}
-              className="text-text-body hover:text-gold-primary transition"
-            >
+            <Link href="/profile" onClick={() => setOpen(false)}
+              className="text-text-body hover:text-gold-primary transition">
               👤 My Profile
             </Link>
           )}
 
-          <Link
-            href="/help"
-            onClick={() => setOpen(false)}
-            className="text-text-body hover:text-gold-primary transition"
-          >
+          <Link href="/help" onClick={() => setOpen(false)}
+            className="text-text-body hover:text-gold-primary transition">
             ❓ How it works
           </Link>
 
-          <Link
-            href="/ai"
-            onClick={() => setOpen(false)}
-            className="text-text-body hover:text-gold-primary transition"
-          >
+          <Link href="/ai" onClick={() => setOpen(false)}
+            className="text-text-body hover:text-gold-primary transition">
             🤖 AI Chat
           </Link>
 
           {!loggedIn && !guest && (
-            <Link
-              href="/login"
-              onClick={() => setOpen(false)}
-              className="text-text-body hover:text-gold-primary transition"
-            >
+            <Link href="/login" onClick={() => setOpen(false)}
+              className="text-text-body hover:text-gold-primary transition">
               🔐 Login / Signup
             </Link>
           )}

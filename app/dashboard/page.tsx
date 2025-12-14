@@ -52,7 +52,6 @@ export default function DashboardPage() {
       try {
         const selRef = collection(db, "selections");
         const qSel = query(selRef, where("phone", "==", phone));
-
         const snap = await getDocs(qSel);
 
         if (!snap.empty) {
@@ -80,7 +79,7 @@ export default function DashboardPage() {
   }, [phone]);
 
   /* ------------------------------------------------
-        FETCH ALL GROUPS (NO orderBy)
+        FETCH MATCHED GROUPS
   ------------------------------------------------ */
   useEffect(() => {
     if (!phone) return;
@@ -107,7 +106,6 @@ export default function DashboardPage() {
         });
       });
 
-      // Manual sorting
       list.sort(
         (a, b) =>
           (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)
@@ -120,7 +118,7 @@ export default function DashboardPage() {
   }, [phone]);
 
   /* ------------------------------------------------
-        DELETE MATCH (AUTO DELETE WHEN EMPTY)
+        DELETE MATCH
   ------------------------------------------------ */
   const deleteMatch = async (groupId: string) => {
     if (!confirm("Remove this match?")) return;
@@ -129,27 +127,20 @@ export default function DashboardPage() {
     try {
       const gRef = doc(db, "groups", groupId);
       const snap = await getDoc(gRef);
-
       if (!snap.exists()) return;
 
       const data = snap.data() as any;
-
-      const members = (data.members || []).map((p: string) => p.trim());
       const currentCount =
         data.membersCount ?? (data.members ? data.members.length : 0);
-
       const newCount = Math.max(0, currentCount - 1);
 
-      // Remove user from group
       await updateDoc(gRef, {
         members: arrayRemove(phone),
         membersCount: newCount,
       });
 
-      // 🔥 AUTO DELETE GROUP IF EMPTY
       if (newCount === 0) {
         await deleteDoc(gRef);
-        console.log("🗑 Group deleted because no members left");
       }
 
       alert("Match removed successfully");
@@ -164,9 +155,13 @@ export default function DashboardPage() {
   ------------------------------------------------ */
   if (!phone) {
     return (
-      <div className="pt-32 px-6 text-white">
-        <h1 className="text-3xl font-bold text-[#16FF6E]">My Partners</h1>
-        <p className="mt-4 text-gray-400">Please login with OTP.</p>
+      <div className="pt-32 px-6 max-w-5xl mx-auto">
+        <h1 className="font-heading text-3xl text-gold-primary">
+          My Partners
+        </h1>
+        <p className="mt-4 text-text-muted">
+          Please login with OTP to view your matches.
+        </p>
       </div>
     );
   }
@@ -176,9 +171,11 @@ export default function DashboardPage() {
   ------------------------------------------------ */
   if (loading) {
     return (
-      <div className="pt-32 px-6 text-white">
-        <h1 className="text-3xl font-bold text-[#16FF6E]">My Partners</h1>
-        <p className="mt-4 text-gray-400">Loading...</p>
+      <div className="pt-32 px-6 max-w-5xl mx-auto">
+        <h1 className="font-heading text-3xl text-gold-primary">
+          My Partners
+        </h1>
+        <p className="mt-4 text-text-muted">Loading...</p>
       </div>
     );
   }
@@ -187,13 +184,15 @@ export default function DashboardPage() {
         UI
   ------------------------------------------------ */
   return (
-    <div className="pt-32 px-6 text-white">
-      <h1 className="text-3xl font-bold text-[#16FF6E]">My Partners</h1>
+    <div className="pt-32 px-6 max-w-5xl mx-auto">
+      <h1 className="font-heading text-3xl text-gold-primary">
+        My Partners
+      </h1>
 
       {latestSelection && (
-        <p className="text-gray-300 mt-4">
+        <p className="text-text-muted mt-4">
           Latest selection:{" "}
-          <span className="text-[#16FF6E] font-bold">
+          <span className="text-gold-primary font-semibold">
             {latestSelection.category.replace("-", " ")} →{" "}
             {latestSelection.option}
           </span>
@@ -201,19 +200,27 @@ export default function DashboardPage() {
       )}
 
       {matches.length === 0 ? (
-        <p className="text-gray-400 mt-4">No partners saved yet.</p>
+        <p className="text-text-muted mt-6">
+          No partners saved yet.
+        </p>
       ) : (
-        <div className="mt-8 space-y-4 max-w-xl">
+        <div className="mt-10 space-y-5">
           {matches.map((group) => (
             <div
               key={group.id}
-              className="p-4 bg-black/40 rounded-xl border border-[#16FF6E]/30"
+              className="
+                rounded-2xl p-5
+                bg-black/40 border border-dark-card
+                hover:border-gold-primary
+                hover:shadow-[0_0_25px_rgba(212,175,55,0.35)]
+                transition
+              "
             >
-              <p className="text-xl font-bold text-[#16FF6E] capitalize">
+              <p className="font-heading text-lg text-gold-primary capitalize">
                 {group.category.replace("-", " ")} → {group.option}
               </p>
 
-              <p className="mt-1">
+              <p className="mt-2 text-sm text-text-body">
                 Status:{" "}
                 <span
                   className={
@@ -228,15 +235,22 @@ export default function DashboardPage() {
                 </span>
               </p>
 
-              <p className="mt-1 text-gray-300">
+              <p className="mt-1 text-sm text-text-muted">
                 Progress: {group.membersCount}/{group.requiredSize}
               </p>
 
               <button
                 onClick={() => deleteMatch(group.id)}
-                className="mt-3 px-3 py-2 bg-red-600 rounded text-sm"
+                className="
+                  mt-4 px-4 py-2 text-xs font-medium
+                  rounded-full
+                  border border-red-500/40
+                  text-red-400
+                  hover:bg-red-600/20 hover:border-red-500
+                  transition
+                "
               >
-                Delete Match
+                Remove Match
               </button>
             </div>
           ))}

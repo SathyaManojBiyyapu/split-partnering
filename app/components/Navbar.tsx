@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -29,19 +30,30 @@ export default function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-30 border-b border-dark-card bg-black/80 backdrop-blur">
-      <nav className="mx-auto flex max-w-6xl items-center justify-between px-3 sm:px-4 py-2 sm:py-3">
+    <header className="sticky top-0 z-30 border-b border-dark-card bg-black/90 backdrop-blur">
+      <nav className="relative mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
 
-        {/* LOGO */}
-        <Link href="/" className="flex items-center gap-3">
-          <span className="h-3 w-3 rounded-full bg-gold-primary shadow-[0_0_10px_rgba(212,175,55,0.8)]" />
-          <span className="font-heading text-base sm:text-lg tracking-wide">
+        {/* LEFT LOGO (TEXT) */}
+        <Link href="/" className="flex items-center gap-3 z-10">
+          <span className="h-3 w-3 rounded-full bg-gold-primary shadow-[0_0_12px_rgba(212,175,55,0.9)]" />
+          <span className="font-heading text-base sm:text-lg tracking-wide text-white">
             Partner<span className="text-gold-primary">Sync</span>
           </span>
         </Link>
 
-        {/* LINKS + LOGIN/LOGOUT (DESKTOP ONLY) */}
-        <div className="hidden md:flex items-center gap-3 text-sm font-body">
+        {/* CENTER LOGO (IMAGE) */}
+        <div className="absolute left-1/2 -translate-x-1/2 hidden md:block">
+          <Image
+            src="/logo.png"
+            alt="PartnerSync Logo"
+            width={42}
+            height={42}
+            className="drop-shadow-[0_0_20px_rgba(212,175,55,0.9)]"
+          />
+        </div>
+
+        {/* RIGHT LINKS */}
+        <div className="hidden md:flex items-center gap-3 text-sm font-body z-10">
           {links.map((link) => {
             const isActive = pathname === link.href;
 
@@ -49,11 +61,11 @@ export default function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`px-3 py-1.5 rounded-full transition-all duration-200
+                className={`px-4 py-1.5 rounded-full transition-all duration-200
                   ${
                     isActive
-                      ? "bg-gold-primary text-black shadow-[0_0_15px_rgba(212,175,55,0.9)]"
-                      : "text-text-muted hover:text-black hover:bg-gold-primary/90 hover:shadow-[0_0_18px_rgba(212,175,55,0.8)] hover:-translate-y-[1px]"
+                      ? "text-gold-primary border border-gold-primary shadow-[0_0_20px_rgba(212,175,55,0.9)]"
+                      : "text-text-muted hover:text-gold-primary hover:border hover:border-gold-primary hover:shadow-[0_0_18px_rgba(212,175,55,0.7)]"
                   }`}
               >
                 {link.label}
@@ -64,9 +76,9 @@ export default function Navbar() {
           {!loggedIn && !guest && (
             <Link
               href="/login"
-              className="ml-2 rounded-full border border-gold-primary px-3 py-1.5 text-xs font-medium
-                         text-gold-primary hover:bg-gold-primary hover:text-black
-                         hover:shadow-[0_0_15px_rgba(212,175,55,0.8)]
+              className="ml-2 rounded-full border border-gold-primary px-3 py-1.5 text-xs
+                         font-medium text-gold-primary
+                         hover:shadow-[0_0_18px_rgba(212,175,55,0.8)]
                          transition"
             >
               Login / OTP
