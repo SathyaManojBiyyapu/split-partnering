@@ -44,7 +44,6 @@ function AuthGuard({ children }: any) {
 
     const guest = localStorage.getItem("guest") === "true";
 
-    // Public pages → allow
     if (
       pathname === "/" ||
       pathname === "/login" ||
@@ -58,16 +57,13 @@ function AuthGuard({ children }: any) {
       return;
     }
 
-    // If the page is NOT in protected list → allow
     if (!protectedPages.some((p) => pathname.startsWith(p))) return;
 
-    // Guest is NOT allowed on protected pages
     if (guest) {
       router.push("/login");
       return;
     }
 
-    // If not logged in → redirect
     if (!user) {
       router.push("/login");
     }
@@ -82,22 +78,20 @@ export default function RootLayout({ children }: any) {
       lang="en"
       className={`${inter.variable} ${playfair.variable}`}
     >
-      <body className="bg-dark-section text-white font-body">
+      <body className="bg-black text-white font-body">
 
         <AuthProvider>
 
-          {/* Top Navigation */}
+          {/* Navigation */}
           <Navbar />
-
-          {/* Right-side Sidebar (Mobile) */}
           <Sidebar />
 
-          {/* Page Content */}
-          <main className="pt-0">
+          {/* Content */}
+          <main className="pt-0 bg-black">
             <AuthGuard>{children}</AuthGuard>
           </main>
 
-          {/* Global Footer */}
+          {/* Footer */}
           <Footer />
 
         </AuthProvider>
