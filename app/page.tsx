@@ -63,22 +63,9 @@ export default function HomePage() {
   return (
     <main className="min-h-screen relative font-body">
 
-      {/* TOP BAR */}
-      <div className="fixed top-4 right-4 flex items-center gap-3 z-50">
-        {!loggedIn && !guest && (
-          <Link
-            href="/login"
-            className="px-4 py-1.5 rounded-full text-xs border border-gold-primary text-gold-primary hover:bg-gold-primary hover:text-black transition"
-          >
-            Login / Continue as Guest
-          </Link>
-        )}
-      </div>
-
       {/* HERO */}
       <section className="pt-32 pb-28 px-6">
         <div className="max-w-5xl mx-auto text-center">
-
           <h1 className="font-heading text-4xl sm:text-5xl md:text-6xl leading-tight mb-6">
             PartnerSync enables
             <br />
