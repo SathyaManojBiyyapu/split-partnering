@@ -80,21 +80,15 @@ export default function ProfilePage() {
     window.location.href = "/categories";
   };
 
-  /* ------------------------------------------
-        LOGOUT
-  ------------------------------------------- */
   const logout = () => {
     localStorage.clear();
     window.location.href = "/login";
   };
 
-  /* ------------------------------------------
-        NOT LOGGED IN
-  ------------------------------------------- */
   if (!phone && !guest) {
     return (
       <div className="pt-32 px-6 text-white text-center">
-        <h1 className="text-3xl font-bold text-[#16FF6E]">Profile</h1>
+        <h1 className="text-3xl font-bold text-[#FFD700]">Profile</h1>
         <p className="mt-3 text-gray-300">
           Please login first to update your profile.
         </p>
@@ -102,9 +96,6 @@ export default function ProfilePage() {
     );
   }
 
-  /* ------------------------------------------
-        LOADING UI
-  ------------------------------------------- */
   if (loading)
     return (
       <div className="pt-32 px-6 text-white text-center">
@@ -112,24 +103,20 @@ export default function ProfilePage() {
       </div>
     );
 
-  /* ------------------------------------------
-        PROFILE UI
-  ------------------------------------------- */
   return (
     <div className="text-white pt-32 flex flex-col items-center gap-5 px-6">
-      <h1 className="text-3xl font-bold text-[#16FF6E] mb-1">
+      <h1 className="text-3xl font-bold text-[#FFD700] mb-1">
         Your Profile
       </h1>
 
       {/* PLATFORM ROLE STATEMENT */}
       <div className="max-w-md text-center text-xs text-gray-400 mb-2">
         SplitPartnering is a{" "}
-        <span className="text-[#16FF6E] font-semibold">
+        <span className="text-[#FFD700] font-semibold">
           partnering service
         </span>
         . We help people find partners to share costs and access group benefits.
-        We do{" "}
-        <span className="text-red-400">not</span> buy or sell any products or
+        We do <span className="text-red-400">not</span> buy or sell any products or
         services.
       </div>
 
@@ -140,9 +127,9 @@ export default function ProfilePage() {
       </p>
 
       {/* PHONE DISPLAY */}
-      <div className="bg-black/50 border border-[#16FF6E]/20 px-4 py-2 rounded-lg w-72 text-center text-sm mb-2">
+      <div className="bg-black/50 border border-[#FFD700]/30 px-4 py-2 rounded-lg w-72 text-center text-sm mb-2">
         Phone:{" "}
-        <span className="text-[#16FF6E] font-semibold">
+        <span className="text-[#FFD700] font-semibold">
           {phone ? phone : "Guest"}
         </span>
       </div>
@@ -153,7 +140,7 @@ export default function ProfilePage() {
         placeholder="Full Name"
         value={name}
         onChange={(e) => setName(e.target.value)}
-        className="neon-input w-72"
+        className="neon-input w-72 border-[#FFD700]/30 focus:border-[#FFD700]"
         disabled={guest}
       />
 
@@ -162,7 +149,7 @@ export default function ProfilePage() {
         placeholder="City"
         value={city}
         onChange={(e) => setCity(e.target.value)}
-        className="neon-input w-72"
+        className="neon-input w-72 border-[#FFD700]/30 focus:border-[#FFD700]"
         disabled={guest}
       />
 
@@ -171,7 +158,7 @@ export default function ProfilePage() {
         placeholder="State"
         value={stateVal}
         onChange={(e) => setStateVal(e.target.value)}
-        className="neon-input w-72"
+        className="neon-input w-72 border-[#FFD700]/30 focus:border-[#FFD700]"
         disabled={guest}
       />
 
@@ -180,7 +167,7 @@ export default function ProfilePage() {
         placeholder="Country"
         value={country}
         onChange={(e) => setCountry(e.target.value)}
-        className="neon-input w-72"
+        className="neon-input w-72 border-[#FFD700]/30 focus:border-[#FFD700]"
         disabled={guest}
       />
 
@@ -189,7 +176,7 @@ export default function ProfilePage() {
         placeholder="Pincode"
         value={pincode}
         onChange={(e) => setPincode(e.target.value)}
-        className="neon-input w-72"
+        className="neon-input w-72 border-[#FFD700]/30 focus:border-[#FFD700]"
         disabled={guest}
       />
 
@@ -197,7 +184,7 @@ export default function ProfilePage() {
         placeholder="Address"
         value={address}
         onChange={(e) => setAddress(e.target.value)}
-        className="neon-input w-72 h-20 resize-none"
+        className="neon-input w-72 h-20 resize-none border-[#FFD700]/30 focus:border-[#FFD700]"
         disabled={guest}
       />
 
@@ -205,7 +192,7 @@ export default function ProfilePage() {
       {!guest && (
         <button
           onClick={saveProfile}
-          className="bg-[#16FF6E] text-black px-6 py-3 rounded-xl font-bold hover:bg-white transition-all mt-2"
+          className="bg-[#FFD700] text-black px-6 py-3 rounded-xl font-bold hover:bg-[#FFEB99] transition-all mt-2"
         >
           Save Profile
         </button>
@@ -218,7 +205,7 @@ export default function ProfilePage() {
         providers.
       </div>
 
-      {/* LOGOUT BUTTON */}
+      {/* LOGOUT */}
       <button
         onClick={logout}
         className="text-red-400 underline text-sm mt-3"
@@ -237,7 +224,7 @@ export default function ProfilePage() {
       {/* AI CHAT */}
       <button
         onClick={() => (window.location.href = "/ai")}
-        className="mt-4 text-[#16FF6E] text-sm underline"
+        className="mt-4 text-[#FFD700] text-sm underline"
       >
         Chat with AI 🤖
       </button>

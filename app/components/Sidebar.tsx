@@ -21,7 +21,7 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* ===== SIDEBAR TOGGLE BUTTON (FIXED & GLOWING) ===== */}
+      {/* ===== SIDEBAR TOGGLE BUTTON ===== */}
       <button
         onClick={() => setOpen(true)}
         aria-label="Open menu"
@@ -71,7 +71,6 @@ export default function Sidebar() {
 
         {/* MENU LINKS */}
         <div className="flex flex-col gap-5 text-sm font-body">
-
           <Link href="/" onClick={() => setOpen(false)}
             className="text-text-body hover:text-gold-primary transition">
             🏠 Home
@@ -108,13 +107,6 @@ export default function Sidebar() {
             className="text-text-body hover:text-gold-primary transition">
             🤖 AI Chat
           </Link>
-
-          {!loggedIn && !guest && (
-            <Link href="/login" onClick={() => setOpen(false)}
-              className="text-text-body hover:text-gold-primary transition">
-              🔐 Login / Signup
-            </Link>
-          )}
 
           {(loggedIn || guest) && (
             <button
