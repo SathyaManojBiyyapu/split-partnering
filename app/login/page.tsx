@@ -42,7 +42,6 @@ export default function LoginPage() {
     try {
       setLoading(true);
 
-      // STEP 1: SEND OTP
       if (!otpSent) {
         const verifier = setupRecaptcha();
         const confirmation = await signInWithPhoneNumber(
@@ -57,7 +56,6 @@ export default function LoginPage() {
         return;
       }
 
-      // STEP 2: VERIFY OTP
       if (!otp) return alert("Enter OTP");
 
       await window.confirmationResult.confirm(otp);
@@ -77,8 +75,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen pt-24 flex flex-col items-center text-white">
-      <h1 className="text-3xl font-bold text-gold-primary mb-6">
+    <div className="min-h-screen pt-28 flex flex-col items-center text-white">
+      <h1 className="text-3xl font-bold text-gold-primary mb-8">
         Login / Signup
       </h1>
 
@@ -101,12 +99,22 @@ export default function LoginPage() {
         />
       )}
 
-      {/* OTP BUTTON */}
+      {/* ===== GOLD TEXT OTP BUTTON ===== */}
       <button
         onClick={handleLoginWithOTP}
         disabled={loading}
-        className="bg-gold-primary text-black font-bold px-6 py-3 rounded-xl mt-4
-                   hover:bg-white transition-all"
+        className="
+          mt-6 px-8 py-3 rounded-xl font-bold
+          bg-black
+          text-gold-primary
+          border border-gold-primary
+          shadow-[0_0_22px_rgba(212,175,55,0.95)]
+          hover:bg-gold-primary hover:text-black
+          hover:shadow-[0_0_35px_rgba(212,175,55,1)]
+          disabled:opacity-70
+          disabled:cursor-not-allowed
+          transition-all duration-200
+        "
       >
         {loading
           ? "Please wait..."
@@ -118,7 +126,7 @@ export default function LoginPage() {
       {/* ADMIN */}
       <button
         onClick={() => (window.location.href = "/admin")}
-        className="text-[10px] opacity-30 mt-6"
+        className="text-[10px] opacity-30 mt-8 hover:opacity-60 transition"
       >
         admin
       </button>

@@ -33,18 +33,18 @@ export default function Navbar() {
     <header className="sticky top-0 z-30 border-b border-dark-card bg-black/90 backdrop-blur">
       <nav className="relative mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
 
-        {/* LEFT LOGO (IMAGE + TEXT) */}
+        {/* LEFT LOGO (3x BIGGER, CLEAN) */}
         <Link href="/" className="flex items-center gap-3 z-10">
           <Image
-            src="/logo.png"   // <-- your infinity logo
+            src="/logo.png"
             alt="PartnerSync Logo"
-            width={34}
-            height={34}
-            className="drop-shadow-[0_0_14px_rgba(212,175,55,0.9)]"
+            width={80}
+            height={80}
             priority
+            className="block"
           />
 
-          <span className="font-heading text-base sm:text-lg tracking-wide text-white">
+          <span className="font-heading text-xl sm:text-2xl tracking-wide text-white">
             Partner<span className="text-gold-primary">Sync</span>
           </span>
         </Link>
@@ -96,4 +96,4 @@ export default function Navbar() {
       </nav>
     </header>
   );
-} 
+}
