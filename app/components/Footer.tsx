@@ -71,13 +71,13 @@ export default function Footer() {
               <li>
                 Phone:
                 <span className="text-text-muted ml-1">
-                  +91 88971 40410
+                  +91 99496 58599
                 </span>
               </li>
               <li>
                 Location:
                 <span className="text-text-muted ml-1">
-                  India
+                  Vijayawada, India
                 </span>
               </li>
             </ul>

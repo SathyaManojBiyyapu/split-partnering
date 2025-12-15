@@ -36,20 +36,19 @@ export default function Navbar() {
         {/* LEFT LOGO (IMAGE + TEXT) */}
         <Link href="/" className="flex items-center gap-3 z-10">
           <Image
-            src="/logo.png"   // <-- your infinity logo
+            src="/logo.png"
             alt="PartnerSync Logo"
             width={34}
             height={34}
             className="drop-shadow-[0_0_14px_rgba(212,175,55,0.9)]"
             priority
           />
-
           <span className="font-heading text-base sm:text-lg tracking-wide text-white">
             Partner<span className="text-gold-primary">Sync</span>
           </span>
         </Link>
 
-        {/* RIGHT LINKS */}
+        {/* RIGHT LINKS (DESKTOP ONLY) */}
         <div className="hidden md:flex items-center gap-3 text-sm font-body z-10">
           {links.map((link) => {
             const isActive = pathname === link.href;
@@ -69,18 +68,6 @@ export default function Navbar() {
               </Link>
             );
           })}
-
-          {!loggedIn && !guest && (
-            <Link
-              href="/login"
-              className="ml-2 rounded-full border border-gold-primary px-3 py-1.5 text-xs
-                         font-medium text-gold-primary
-                         hover:shadow-[0_0_18px_rgba(212,175,55,0.8)]
-                         transition"
-            >
-              Login / OTP
-            </Link>
-          )}
 
           {(loggedIn || guest) && (
             <button

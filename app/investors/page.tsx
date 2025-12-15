@@ -22,17 +22,11 @@ export default function InvestorsPage() {
           </p>
 
           <div className="flex flex-wrap justify-center gap-4">
-            <a
-              href="#contact"
-              className="btn-primary"
-            >
+            <a href="#contact" className="btn-primary">
               Talk to Founders
             </a>
 
-            <a
-              href="#deck"
-              className="btn-outline"
-            >
+            <a href="#deck" className="btn-outline">
               View Pitch Overview
             </a>
           </div>
@@ -107,9 +101,9 @@ export default function InvestorsPage() {
           <p className="text-text-muted max-w-4xl leading-relaxed">
             PartnerSync operates at the intersection of consumer savings,
             shared-economy behavior, and digital coordination. The global
-            consumer services and subscription economy represents a multi-trillion-dollar
-            opportunity, with increasing user willingness to collaborate for
-            better pricing.
+            consumer services and subscription economy represents a
+            multi-trillion-dollar opportunity, with increasing user willingness
+            to collaborate for better pricing.
           </p>
         </section>
 
@@ -164,7 +158,7 @@ export default function InvestorsPage() {
         </section>
 
         {/* ================= CTA ================= */}
-        <section id="contact" className="text-center">
+        <section id="contact" className="text-center mb-24">
           <h2 className="font-heading text-2xl sm:text-3xl mb-4">
             Let’s build this together
           </h2>
@@ -179,13 +173,63 @@ export default function InvestorsPage() {
               Contact Founders
             </Link>
 
-            <a
-              id="deck"
-              href="#"
-              className="btn-outline"
-            >
+            <a id="deck" href="#" className="btn-outline">
               Request Pitch Deck
             </a>
+          </div>
+        </section>
+
+        {/* ================= PHASED ROLLOUT & MONETIZATION ================= */}
+        <section className="mb-24">
+          <h2 className="font-heading text-2xl sm:text-3xl mb-10 text-center">
+            Phased rollout & monetization strategy
+          </h2>
+
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+
+            <div className="border border-dark-card bg-dark-section rounded-2xl p-6">
+              <h3 className="font-heading text-lg mb-2 text-gold-primary">
+                Ground Phase
+              </h3>
+              <p className="text-sm text-text-muted leading-relaxed">
+                Initial phase focused on adoption and learning. PartnerSync
+                enables free partnering to validate use cases, understand
+                demand behavior, and refine matching accuracy.
+              </p>
+            </div>
+
+            <div className="border border-dark-card bg-dark-section rounded-2xl p-6">
+              <h3 className="font-heading text-lg mb-2 text-gold-primary">
+                Alpha Phase
+              </h3>
+              <p className="text-sm text-text-muted leading-relaxed">
+                A minimal platform fee is introduced with a countdown-based
+                matching system that encourages faster partner formation and
+                commitment.
+              </p>
+            </div>
+
+            <div className="border border-dark-card bg-dark-section rounded-2xl p-6">
+              <h3 className="font-heading text-lg mb-2 text-gold-primary">
+                Beta Phase
+              </h3>
+              <p className="text-sm text-text-muted leading-relaxed">
+                Users can pay higher fees for priority matching, gaining faster
+                access to high-quality partners and time-sensitive opportunities.
+              </p>
+            </div>
+
+            <div className="border border-dark-card bg-dark-section rounded-2xl p-6">
+              <h3 className="font-heading text-lg mb-2 text-gold-primary">
+                Gamma Phase
+              </h3>
+              <p className="text-sm text-text-muted leading-relaxed">
+                Subscription plans (monthly and yearly) are introduced for power
+                users, businesses, and frequent collaborators, enabling
+                predictable recurring revenue.
+              </p>
+            </div>
+
           </div>
         </section>
 
