@@ -99,18 +99,22 @@ export default function LoginPage() {
         />
       )}
 
-      {/* ===== GOLD TEXT OTP BUTTON ===== */}
+      {/* ===== PREMIUM GOLD OTP BUTTON ===== */}
       <button
         onClick={handleLoginWithOTP}
         disabled={loading}
         className="
           mt-6 px-8 py-3 rounded-xl font-bold
           bg-black
-          text-gold-primary
-          border border-gold-primary
-          shadow-[0_0_22px_rgba(212,175,55,0.95)]
-          hover:bg-gold-primary hover:text-black
-          hover:shadow-[0_0_35px_rgba(212,175,55,1)]
+          text-[#E6C972]            /* champagne gold text */
+          border border-[#E6C972]
+
+          shadow-[inset_0_0_0_rgba(0,0,0,0),_0_0_18px_rgba(230,201,114,0.75)]
+
+          hover:bg-[#F3DC8A]        /* soft luxury gold */
+          hover:text-black
+          hover:shadow-[inset_0_0_22px_rgba(230,201,114,0.9),_0_0_36px_rgba(230,201,114,1)]
+
           disabled:opacity-70
           disabled:cursor-not-allowed
           transition-all duration-200
