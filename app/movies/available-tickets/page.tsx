@@ -60,14 +60,26 @@ export default function AvailableTicketsPage() {
   /* CONTACT ADMIN */
   const contactAdmin = async (ticketId: string) => {
     try {
+      const buyerPhone =
+        typeof window !== "undefined"
+          ? localStorage.getItem("phone")
+          : null;
+
+      if (!buyerPhone) {
+        alert("Please login to continue");
+        return;
+      }
+
       await addDoc(collection(db, "ticketRequests"), {
         ticketId,
+        buyerPhone: buyerPhone.trim(),
         status: "requested",
         createdAt: serverTimestamp(),
       });
 
       alert("Admin will contact you shortly.");
-    } catch {
+    } catch (err) {
+      console.error(err);
       alert("Failed to send request");
     }
   };
@@ -143,9 +155,7 @@ export default function AvailableTicketsPage() {
                 {t.movie}
               </h2>
 
-              <p className="text-sm text-gray-400">
-                🎭 {t.theatre}
-              </p>
+              <p className="text-sm text-gray-400">🎭 {t.theatre}</p>
               <p className="text-sm text-gray-400">
                 📍 {t.city}, {t.state}
               </p>

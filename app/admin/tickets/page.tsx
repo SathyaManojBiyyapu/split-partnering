@@ -27,6 +27,7 @@ type Ticket = {
 type Request = {
   id: string;
   ticketId: string;
+  buyerPhone?: string;
   status: string;
 };
 
@@ -80,11 +81,7 @@ export default function AdminTicketsPage() {
   };
 
   if (loading) {
-    return (
-      <p className="text-gray-400 p-10">
-        Loading admin tickets...
-      </p>
-    );
+    return <p className="text-gray-400 p-10">Loading admin tickets...</p>;
   }
 
   return (
@@ -106,16 +103,20 @@ export default function AdminTicketsPage() {
             {requests.map((r) => (
               <div
                 key={r.id}
-                className="
-                  p-4 rounded-xl
-                  border border-[#FFD166]/30
-                  bg-[#0c0c0c]
-                "
+                className="p-4 rounded-xl border border-[#FFD166]/30 bg-[#0c0c0c]"
               >
                 <p className="text-sm text-gray-300">
-                  Ticket ID: {r.ticketId}
+                  <span className="text-[#FFD166]">Request ID:</span> {r.id}
                 </p>
-                <p className="text-xs text-gray-500">
+                <p className="text-sm text-gray-300">
+                  <span className="text-[#FFD166]">Ticket ID:</span>{" "}
+                  {r.ticketId}
+                </p>
+                <p className="text-sm text-gray-300">
+                  <span className="text-[#FFD166]">Buyer Phone:</span>{" "}
+                  {r.buyerPhone ?? "N/A"}
+                </p>
+                <p className="text-xs text-gray-400">
                   Status: {r.status}
                 </p>
               </div>
@@ -136,19 +137,13 @@ export default function AdminTicketsPage() {
           {tickets.map((t) => (
             <div
               key={t.id}
-              className="
-                p-6 rounded-2xl
-                border border-[#FFD166]/30
-                bg-gradient-to-b from-[#0c0c0c] to-black
-              "
+              className="p-6 rounded-2xl border border-[#FFD166]/30 bg-gradient-to-b from-[#0c0c0c] to-black"
             >
               <h3 className="text-lg font-semibold text-[#FFD166] mb-2">
                 {t.movie}
               </h3>
 
-              <p className="text-sm text-gray-400">
-                🎭 {t.theatre}
-              </p>
+              <p className="text-sm text-gray-400">🎭 {t.theatre}</p>
               <p className="text-sm text-gray-400">
                 📍 {t.city}, {t.state}
               </p>
@@ -175,12 +170,7 @@ export default function AdminTicketsPage() {
               {t.status === "available" && (
                 <button
                   onClick={() => markSold(t.id)}
-                  className="
-                    w-full mt-4 px-4 py-2 rounded-lg
-                    bg-red-600 text-white
-                    hover:bg-red-700
-                    transition
-                  "
+                  className="w-full mt-4 px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition"
                 >
                   Mark as Sold
                 </button>
