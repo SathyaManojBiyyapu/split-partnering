@@ -9,6 +9,7 @@ import {
 } from "firebase/auth";
 
 import { auth, googleProvider } from "@/firebase/config";
+import toast from "react-hot-toast"; // ✅ ADDED (ONLY THIS IMPORT)
 
 declare global {
   interface Window {
@@ -42,7 +43,9 @@ export default function LoginPage() {
   ------------------------------------------ */
   const handleLoginWithOTP = async () => {
     if (!phone || phone.length !== 10) {
-      return alert("Enter valid 10-digit mobile number");
+      alert("Enter valid 10-digit mobile number");
+      toast.error("Enter valid 10-digit mobile number"); // ✅ ADDED
+      return;
     }
 
     try {
@@ -59,10 +62,15 @@ export default function LoginPage() {
         window.confirmationResult = confirmation;
         setOtpSent(true);
         alert("OTP sent to your mobile");
+        toast.success("OTP sent to your mobile 📩"); // ✅ ADDED
         return;
       }
 
-      if (!otp) return alert("Enter OTP");
+      if (!otp) {
+        alert("Enter OTP");
+        toast.error("Enter OTP"); // ✅ ADDED
+        return;
+      }
 
       await window.confirmationResult.confirm(otp);
 
@@ -71,10 +79,12 @@ export default function LoginPage() {
       localStorage.removeItem("guest");
 
       alert("Login successful!");
+      toast.success("Login successful 🎉"); // ✅ ADDED
       window.location.href = "/profile";
     } catch (err) {
       console.error(err);
       alert("OTP failed. Try again.");
+      toast.error("OTP failed. Try again ❌"); // ✅ ADDED
     } finally {
       setLoading(false);
     }
@@ -97,10 +107,12 @@ export default function LoginPage() {
       localStorage.removeItem("guest");
 
       alert("Google login successful!");
+      toast.success("Google login successful 🎉"); // ✅ ADDED
       window.location.href = "/profile";
     } catch (err) {
       console.error(err);
       alert("Google login failed");
+      toast.error("Google login failed ❌"); // ✅ ADDED
     } finally {
       setLoading(false);
     }

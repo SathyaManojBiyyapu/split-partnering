@@ -10,6 +10,7 @@ import {
   addDoc,
   serverTimestamp,
 } from "firebase/firestore";
+import toast from "react-hot-toast"; // ✅ ADDED (ONLY THIS IMPORT)
 
 type Ticket = {
   id: string;
@@ -67,6 +68,7 @@ export default function AvailableTicketsPage() {
 
       if (!buyerPhone) {
         alert("Please login to continue");
+        toast.error("Please login to continue"); // ✅ ADDED
         return;
       }
 
@@ -78,9 +80,11 @@ export default function AvailableTicketsPage() {
       });
 
       alert("Admin will contact you shortly.");
+      toast.success("Admin will contact you shortly 📞"); // ✅ ADDED
     } catch (err) {
       console.error(err);
       alert("Failed to send request");
+      toast.error("Failed to send request ❌"); // ✅ ADDED
     }
   };
 

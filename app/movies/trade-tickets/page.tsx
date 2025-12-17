@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { db } from "@/firebase/config";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import toast from "react-hot-toast"; // ✅ ADDED (ONLY THIS IMPORT)
 
 export default function TradeTicketsPage() {
   const router = useRouter();
@@ -19,6 +20,7 @@ export default function TradeTicketsPage() {
 
     if (!storedPhone) {
       alert("Please login to trade tickets");
+      toast.error("Please login to trade tickets"); // ✅ ADDED
       router.push("/login");
       return;
     }
@@ -59,7 +61,9 @@ export default function TradeTicketsPage() {
       !showTime ||
       quantity < 1
     ) {
-      return alert("Please fill all fields");
+      alert("Please fill all fields");
+      toast.error("Please fill all fields"); // ✅ ADDED
+      return;
     }
 
     try {
@@ -79,10 +83,12 @@ export default function TradeTicketsPage() {
       });
 
       alert("Ticket listed successfully!");
+      toast.success("Ticket listed successfully 🎟️"); // ✅ ADDED
       router.push("/movies/available-tickets");
     } catch (err) {
       console.error(err);
       alert("Failed to save ticket");
+      toast.error("Failed to save ticket ❌"); // ✅ ADDED
     } finally {
       setLoading(false);
     }
@@ -180,4 +186,3 @@ export default function TradeTicketsPage() {
     </div>
   );
 }
-``

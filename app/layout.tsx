@@ -11,10 +11,8 @@ import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 
 import { Inter, Playfair_Display } from "next/font/google";
+import { Toaster } from "react-hot-toast"; // ✅ ADDED
 
-/* =========================
-   FONTS (INVESTOR GRADE)
-========================= */
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-body",
@@ -74,27 +72,33 @@ function AuthGuard({ children }: any) {
 
 export default function RootLayout({ children }: any) {
   return (
-    <html
-      lang="en"
-      className={`${inter.variable} ${playfair.variable}`}
-    >
+    <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
       <body className="bg-black text-white font-body">
 
         <AuthProvider>
-
-          {/* Navigation */}
           <Navbar />
           <Sidebar />
 
-          {/* Content */}
           <main className="pt-0 bg-black">
             <AuthGuard>{children}</AuthGuard>
           </main>
 
-          {/* Footer */}
           <Footer />
-
         </AuthProvider>
+
+        {/* ✅ ADDED ONLY */}
+        <Toaster
+          position="top-center"
+          toastOptions={{
+            duration: 3000,
+            style: {
+              background: "#000",
+              color: "#FFD166",
+              border: "1px solid #FFD166",
+              boxShadow: "0 0 18px rgba(255,209,102,0.6)",
+            },
+          }}
+        />
 
       </body>
     </html>
