@@ -1,8 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
-import { auth } from "@/firebase/config";
+import Link from "next/link";
+import {
+  RecaptchaVerifier,
+  signInWithPhoneNumber,
+  signInWithPopup,
+} from "firebase/auth";
+
+import { auth, googleProvider } from "@/firebase/config";
 
 declare global {
   interface Window {
@@ -32,7 +38,7 @@ export default function LoginPage() {
   };
 
   /* ------------------------------------------
-     LOGIN WITH OTP (SEND + VERIFY)
+     LOGIN WITH OTP
   ------------------------------------------ */
   const handleLoginWithOTP = async () => {
     if (!phone || phone.length !== 10) {
@@ -74,12 +80,39 @@ export default function LoginPage() {
     }
   };
 
+  /* ------------------------------------------
+     LOGIN WITH GOOGLE
+  ------------------------------------------ */
+  const handleGoogleLogin = async () => {
+    try {
+      setLoading(true);
+
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+
+      localStorage.setItem("loggedIn", "true");
+      localStorage.setItem("uid", user.uid);
+      localStorage.setItem("email", user.email || "");
+      localStorage.setItem("name", user.displayName || "");
+      localStorage.removeItem("guest");
+
+      alert("Google login successful!");
+      window.location.href = "/profile";
+    } catch (err) {
+      console.error(err);
+      alert("Google login failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen pt-28 flex flex-col items-center text-white">
       <h1 className="text-3xl font-bold text-gold-primary mb-8">
         Login / Signup
       </h1>
 
+      {/* PHONE INPUT */}
       <input
         type="tel"
         placeholder="Enter Mobile Number"
@@ -89,6 +122,7 @@ export default function LoginPage() {
         disabled={otpSent}
       />
 
+      {/* OTP INPUT */}
       {otpSent && (
         <input
           type="number"
@@ -99,24 +133,19 @@ export default function LoginPage() {
         />
       )}
 
-      {/* ===== PREMIUM GOLD OTP BUTTON ===== */}
+      {/* OTP BUTTON */}
       <button
         onClick={handleLoginWithOTP}
         disabled={loading}
         className="
           mt-6 px-8 py-3 rounded-xl font-bold
           bg-black
-          text-[#E6C972]            /* champagne gold text */
+          text-[#E6C972]
           border border-[#E6C972]
-
-          shadow-[inset_0_0_0_rgba(0,0,0,0),_0_0_18px_rgba(230,201,114,0.75)]
-
-          hover:bg-[#F3DC8A]        /* soft luxury gold */
+          shadow-[0_0_18px_rgba(230,201,114,0.75)]
+          hover:bg-[#F3DC8A]
           hover:text-black
-          hover:shadow-[inset_0_0_22px_rgba(230,201,114,0.9),_0_0_36px_rgba(230,201,114,1)]
-
-          disabled:opacity-70
-          disabled:cursor-not-allowed
+          hover:shadow-[0_0_36px_rgba(230,201,114,1)]
           transition-all duration-200
         "
       >
@@ -125,6 +154,20 @@ export default function LoginPage() {
           : otpSent
           ? "Verify OTP"
           : "Login with OTP"}
+      </button>
+
+      {/* GOOGLE LOGIN */}
+      <button
+        onClick={handleGoogleLogin}
+        disabled={loading}
+        className="
+          mt-4 px-8 py-3 rounded-xl font-semibold
+          border border-gray-500
+          hover:bg-white/10
+          transition
+        "
+      >
+        Continue with Google
       </button>
 
       {/* ADMIN */}

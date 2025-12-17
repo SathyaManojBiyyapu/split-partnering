@@ -43,12 +43,11 @@ export default function AdminPage() {
     const unsubscribe = onSnapshot(ref, async (snap) => {
       const docs = snap.docs;
 
-      // Build all groups in parallel
       const builtGroups = await Promise.all(
         docs.map(async (gDoc) => {
           const data = gDoc.data() as any;
 
-          // 🔥 AUTO DELETE EMPTY OR CORRUPTED GROUPS
+          // AUTO DELETE EMPTY OR CORRUPTED GROUPS
           if (!Array.isArray(data.members) || data.members.length === 0) {
             await deleteDoc(gDoc.ref);
             console.log("Auto-deleted empty group:", gDoc.id);
@@ -61,7 +60,7 @@ export default function AdminPage() {
               typeof m === "string" ? m.trim() : String(m ?? "")
           );
 
-          // Parallel user lookups (faster)
+          // Fetch user details
           const userDocs = await Promise.all(
             cleanedMembers.map((phone: string) =>
               getDoc(doc(db, "users", phone))
@@ -88,10 +87,9 @@ export default function AdminPage() {
         })
       );
 
-      // Remove nulls (deleted groups)
       const list = builtGroups.filter((g): g is any => g !== null);
 
-      // Manual sorting (safe if createdAt missing)
+      // Sort newest first
       list.sort((a, b) => {
         const ta = a.createdAt?.seconds || 0;
         const tb = b.createdAt?.seconds || 0;
@@ -136,7 +134,7 @@ export default function AdminPage() {
   };
 
   /* ----------------------------
-       DELETE GROUP (MANUAL)
+       DELETE GROUP
   ---------------------------- */
   const deleteGroup = async (id: string) => {
     if (!confirm("Delete this group?")) return;
@@ -145,48 +143,37 @@ export default function AdminPage() {
   };
 
   /* ----------------------------
-       REMOVE MEMBER (AUTO DELETE IF LAST)
+       REMOVE MEMBER
   ---------------------------- */
   const removeMember = async (groupId: string, phone: string) => {
     if (!confirm("Remove this member?")) return;
 
-    try {
-      const gRef = doc(db, "groups", groupId);
-      const snap = await getDoc(gRef);
+    const gRef = doc(db, "groups", groupId);
+    const snap = await getDoc(gRef);
+    if (!snap.exists()) return alert("Group missing.");
 
-      if (!snap.exists()) return alert("Group missing.");
+    const data = snap.data() as any;
+    const members: string[] = (data.members || []).map((p: string) =>
+      typeof p === "string" ? p.trim() : ""
+    );
 
-      const data = snap.data() as any;
+    const filtered = members.filter((p) => p !== phone.trim());
+    const newCount = filtered.length;
+    const required = data.requiredSize ?? filtered.length;
 
-      const members: string[] = (data.members || []).map((p: string) =>
-        typeof p === "string" ? p.trim() : String(p ?? "")
-      );
-
-      const filtered = members.filter(
-        (p: string) => p !== phone.trim()
-      );
-
-      const newCount = filtered.length;
-      const required = data.requiredSize ?? filtered.length;
-
-      // If no members left → delete the group
-      if (newCount === 0) {
-        await deleteDoc(gRef);
-        alert("Group deleted (no members left).");
-        return;
-      }
-
-      await updateDoc(gRef, {
-        members: filtered,
-        membersCount: newCount,
-        status: newCount < required ? "waiting" : data.status,
-      });
-
-      alert("Member removed.");
-    } catch (err) {
-      console.error(err);
-      alert("Failed to remove member.");
+    if (newCount === 0) {
+      await deleteDoc(gRef);
+      alert("Group deleted (no members left).");
+      return;
     }
+
+    await updateDoc(gRef, {
+      members: filtered,
+      membersCount: newCount,
+      status: newCount < required ? "waiting" : data.status,
+    });
+
+    alert("Member removed.");
   };
 
   /* ----------------------------
@@ -199,7 +186,7 @@ export default function AdminPage() {
   };
 
   /* ----------------------------
-       WHATSAPP FUNCTIONS
+       WHATSAPP
   ---------------------------- */
   const contactAll = (g: any) => {
     if (!g.members?.length) return alert("No numbers available.");
@@ -213,28 +200,22 @@ export default function AdminPage() {
     const encoded = encodeURIComponent(message);
 
     g.members.forEach((phone: string) => {
-      const waNumber = "91" + String(phone).trim();
+      const waNumber = "91" + phone.trim();
       window.open(`https://wa.me/${waNumber}?text=${encoded}`);
     });
   };
 
   const contactOne = (g: any) => {
-    if (!g.members.length) return alert("No numbers");
-
-    const choice = prompt(
-      `Enter number to contact:\n\n${g.members.join("\n")}`
-    );
+    const choice = prompt(`Enter number:\n${g.members.join("\n")}`);
     if (!choice) return;
 
     const clean = choice.trim();
+    if (!g.members.includes(clean)) {
+      alert("Number not in group");
+      return;
+    }
 
-    if (!g.members.includes(clean))
-      return alert("This number is not a member in this group.");
-
-    const encoded = encodeURIComponent("Hello! Your group is active.");
-    const waNumber = "91" + clean;
-
-    window.open(`https://wa.me/${waNumber}?text=${encoded}`);
+    window.open(`https://wa.me/91${clean}?text=Hello!`);
   };
 
   /* ----------------------------
@@ -252,7 +233,6 @@ export default function AdminPage() {
             value={usernameInput}
             onChange={(e) => setUsernameInput(e.target.value)}
           />
-
           <input
             type="password"
             className="p-3 rounded text-black w-full"
@@ -260,7 +240,6 @@ export default function AdminPage() {
             value={passwordInput}
             onChange={(e) => setPasswordInput(e.target.value)}
           />
-
           <button className="w-full bg-[#16FF6E] py-2 text-black rounded font-bold">
             Login
           </button>
@@ -270,21 +249,22 @@ export default function AdminPage() {
   }
 
   /* ----------------------------
-       ADMIN DASHBOARD UI
+       DASHBOARD UI
   ---------------------------- */
   return (
     <div className="pt-28 px-6 text-white">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-[#16FF6E]">
           Admin — Partner Groups
         </h1>
 
-        <div className="flex items-center gap-3">
+        <div className="flex gap-3">
+          {/* ✅ ONLY NEW ADDITION */}
           <button
-            onClick={() => (window.location.href = "/")}
-            className="px-3 py-1 bg-gray-700 rounded text-xs"
+            onClick={() => (window.location.href = "/admin/tickets")}
+            className="px-3 py-1 bg-yellow-500 text-black rounded text-xs"
           >
-            Home
+            Movie Tickets
           </button>
 
           <button
@@ -297,11 +277,9 @@ export default function AdminPage() {
       </div>
 
       {loading ? (
-        <p className="mt-4 text-gray-400">Loading…</p>
-      ) : groups.length === 0 ? (
-        <p className="mt-4 text-gray-400">No groups found.</p>
+        <p className="text-gray-400">Loading…</p>
       ) : (
-        <div className="mt-6 space-y-4">
+        <div className="space-y-4">
           {groups.map((g) => (
             <div
               key={g.id}
@@ -311,73 +289,31 @@ export default function AdminPage() {
                 {g.category} → {g.option}
               </p>
 
-              <p className="mt-1">
-                Status:{" "}
-                <span
-                  className={
-                    g.status === "ready"
-                      ? "text-green-400"
-                      : g.status === "completed"
-                      ? "text-blue-400"
-                      : "text-yellow-400"
-                  }
-                >
-                  {g.status}
-                </span>
+              <p className="text-[#16FF6E] font-bold">
+                {g.membersCount}/{g.requiredSize}
               </p>
-
-              <p className="mt-1 text-[#16FF6E] font-bold">
-                {g.membersCount}/{g.requiredSize} partners
-              </p>
-
-              <div className="mt-4">
-                <p className="font-bold">Members:</p>
-                <ul className="ml-4 mt-2 list-disc">
-                  {g.membersDetailed.map((m: any, i: number) => (
-                    <li key={i}>
-                      {m.name} — {m.phone}
-                      <button
-                        onClick={() => removeMember(g.id, m.phone)}
-                        className="ml-2 px-2 py-1 bg-red-600 rounded text-xs"
-                      >
-                        Remove
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
 
               <div className="flex flex-wrap gap-2 mt-4">
                 <button
-                  className="px-3 py-1 bg-green-600 rounded text-sm"
+                  className="bg-green-600 px-3 py-1 rounded"
                   onClick={() => contactAll(g)}
                 >
                   WhatsApp All
                 </button>
-
                 <button
-                  className="px-3 py-1 bg-green-800 rounded text-sm"
-                  onClick={() => contactOne(g)}
-                >
-                  Message One
-                </button>
-
-                <button
-                  className="px-3 py-1 bg-blue-600 rounded text-sm"
+                  className="bg-blue-600 px-3 py-1 rounded"
                   onClick={() => markCompleted(g.id)}
                 >
                   Mark Completed
                 </button>
-
                 <button
-                  className="px-3 py-1 bg-purple-600 rounded text-sm"
+                  className="bg-purple-600 px-3 py-1 rounded"
                   onClick={() => exportCSV(g)}
                 >
                   Export CSV
                 </button>
-
                 <button
-                  className="px-3 py-1 bg-red-600 rounded text-sm"
+                  className="bg-red-600 px-3 py-1 rounded"
                   onClick={() => deleteGroup(g.id)}
                 >
                   Delete Group

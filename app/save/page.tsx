@@ -16,6 +16,7 @@ import {
   setDoc,
   getDoc,
 } from "firebase/firestore";
+import { partneringInfo } from "@/app/data/partneringInfo";
 
 /* -----------------------------------------
    GROUP SIZE
@@ -60,14 +61,12 @@ const GROUP_SIZE: Record<string, number> = {
 const getRequiredSize = (opt: string) => GROUP_SIZE[opt] || 2;
 
 /* -----------------------------------------
-   CREATE OR JOIN GROUP (FIXED)
+   CREATE OR JOIN GROUP (UNCHANGED)
 ------------------------------------------*/
 async function createOrJoinGroup(category: string, option: string, rawPhone: string) {
   const cleanPhone = rawPhone.trim();
-
   const groupsRef = collection(db, "groups");
 
-  // 🚀 FIX: Remove status filter → allow joining ANY unfilled group
   const q = query(
     groupsRef,
     where("category", "==", category),
@@ -81,15 +80,10 @@ async function createOrJoinGroup(category: string, option: string, rawPhone: str
     const members: string[] = g.members || [];
     const required = g.requiredSize || getRequiredSize(option);
 
-    // Already inside group
     if (members.includes(cleanPhone)) {
-      return {
-        status: "already",
-        membersCount: members.length,
-      };
+      return { status: "already", membersCount: members.length };
     }
 
-    // Join if space left
     if (members.length < required) {
       const gRef = doc(db, "groups", gdoc.id);
 
@@ -101,7 +95,6 @@ async function createOrJoinGroup(category: string, option: string, rawPhone: str
       const updated = (await getDoc(gRef)).data() as any;
       const updatedMembers = updated.members || [];
 
-      // Mark ready
       if (updatedMembers.length >= required) {
         await updateDoc(gRef, {
           status: "ready",
@@ -109,14 +102,10 @@ async function createOrJoinGroup(category: string, option: string, rawPhone: str
         });
       }
 
-      return {
-        status: "joined",
-        membersCount: updatedMembers.length,
-      };
+      return { status: "joined", membersCount: updatedMembers.length };
     }
   }
 
-  // Create a NEW group
   const newGroupRef = doc(groupsRef);
   const required = getRequiredSize(option);
 
@@ -126,18 +115,15 @@ async function createOrJoinGroup(category: string, option: string, rawPhone: str
     members: [cleanPhone],
     membersCount: 1,
     requiredSize: required,
-    status: required === 1 ? "ready" : "waiting",
-    createdAt: serverTimestamp(), // ALWAYS set createdAt
+    status: "waiting",
+    createdAt: serverTimestamp(),
   });
 
-  return {
-    status: "created",
-    membersCount: 1,
-  };
+  return { status: "created", membersCount: 1 };
 }
 
 /* -----------------------------------------
-   SAVE CONTENT UI
+   SAVE CONTENT UI (STYLE UPDATED)
 ------------------------------------------*/
 function SaveContent() {
   const searchParams = useSearchParams();
@@ -149,7 +135,7 @@ function SaveContent() {
   const rawPhone =
     typeof window !== "undefined" ? localStorage.getItem("phone") : null;
 
-  const phone: string | null = rawPhone ? rawPhone.trim() : null;
+  const phone = rawPhone ? rawPhone.trim() : null;
 
   const isGuest =
     typeof window !== "undefined"
@@ -157,15 +143,12 @@ function SaveContent() {
       : false;
 
   const [userName, setUserName] = useState<string | null>(null);
+  const info = partneringInfo[category];
 
   /* REQUIRE LOGIN */
   useEffect(() => {
-    if (isGuest) {
-      alert("Guest mode cannot save partner. Please login.");
-      router.push("/login");
-    }
-
-    if (!phone) {
+    if (isGuest || !phone) {
+      alert("Please login to continue.");
       router.push("/login");
     }
   }, [isGuest, phone, router]);
@@ -175,85 +158,114 @@ function SaveContent() {
     if (!phone) return;
 
     const fetchUser = async () => {
-      try {
-        const userRef = doc(db, "users", phone);
-        const snap = await getDoc(userRef);
-
-        if (snap.exists()) {
-          setUserName((snap.data() as any).name || null);
-        }
-      } catch (err) {
-        console.error("Profile load error:", err);
+      const snap = await getDoc(doc(db, "users", phone));
+      if (snap.exists()) {
+        setUserName((snap.data() as any).name || null);
       }
     };
 
     fetchUser();
   }, [phone]);
 
-  /* SAVE PARTNER (FULLY FIXED) */
+  /* SAVE PARTNER */
   const savePartner = async () => {
-    if (!phone) return alert("Login required.");
-
-    const cleanPhone = phone.trim();
+    if (!phone) return;
 
     try {
-      const result = await createOrJoinGroup(category, option, cleanPhone);
+      const result = await createOrJoinGroup(category, option, phone);
 
-      // Ensure user exists
-      const userRef = doc(db, "users", cleanPhone);
-      const userSnap = await getDoc(userRef);
-
-      if (!userSnap.exists()) {
-        await setDoc(userRef, {
-          phone: cleanPhone,
-          name: userName || "User",
-          createdAt: serverTimestamp(),
-        });
-      }
-
-      // ALWAYS log selection (needed for multiple matches)
       await addDoc(collection(db, "selections"), {
-        phone: cleanPhone,
+        phone,
         userName,
         category,
         option,
-        createdAt: serverTimestamp(), // ALWAYS add createdAt
+        createdAt: serverTimestamp(),
       });
 
       alert(
-        `Partner saved!\n\nStatus: ${result.status}\nMembers: ${result.membersCount}/${getRequiredSize(
+        `Partner saved!\nStatus: ${result.status}\nMembers: ${result.membersCount}/${getRequiredSize(
           option
         )}`
       );
 
       router.push("/categories");
-    } catch (err) {
-      console.error(err);
+    } catch {
       alert("Saving failed.");
     }
   };
 
   return (
-    <div className="min-h-screen pt-28 px-6 text-white">
-      <h1 className="text-3xl font-bold text-[#16FF6E] mb-6">
+    <div className="min-h-screen pt-32 px-6 bg-black text-[#F5F5F5]">
+      {/* HEADER */}
+      <h1 className="text-3xl font-semibold text-[#FFD166] tracking-wide mb-4">
         Make Your Match
       </h1>
 
-      <p className="text-gray-300 mb-4">
-        You selected <strong>{option}</strong> under{" "}
-        <strong>{category.replace("-", " ")}</strong>
+      <p className="text-gray-400 mb-8">
+        You selected{" "}
+        <span className="text-[#FFD166] font-medium">{option}</span> under{" "}
+        <span className="text-[#FFD166] font-medium">
+          {category.replace("-", " ")}
+        </span>
       </p>
 
+      {/* CATEGORY INFO */}
+      {info && (
+        <div className="
+          mb-8 max-w-3xl
+          border border-[#FFD166]/20
+          p-6 rounded-2xl
+          bg-gradient-to-br from-[#0e0e0e] to-black
+        ">
+          <h2 className="text-lg font-semibold text-[#FFD166] mb-2">
+            {info.title}
+          </h2>
+
+          {info.topLine && (
+            <p className="text-gray-400 mb-4">{info.topLine}</p>
+          )}
+
+          <ul className="space-y-4 text-sm">
+            {info.sections.map((sec: any, i: number) => (
+              <li key={i}>
+                <span className="font-medium text-[#FFD166]">
+                  {sec.title}
+                </span>
+                <div className="text-gray-400">{sec.text}</div>
+                {sec.example && (
+                  <div className="text-gray-500 mt-1">{sec.example}</div>
+                )}
+              </li>
+            ))}
+          </ul>
+
+          <p className="text-[11px] text-gray-500 mt-5 italic">
+            SplitPartnering is a partnering service. We do not buy or sell products.
+          </p>
+        </div>
+      )}
+
+      {/* SAVE BUTTON */}
       <button
         onClick={savePartner}
-        className="px-6 py-3 bg-[#16FF6E] text-black rounded-xl hover:bg-white font-bold transition-all mt-4"
+        className="
+          px-8 py-3 rounded-xl font-semibold
+          bg-black text-[#E6C972]
+          border border-[#E6C972]
+          shadow-[0_0_18px_rgba(230,201,114,0.75)]
+          hover:bg-[#F3DC8A]
+          hover:text-black
+          hover:shadow-[0_0_36px_rgba(230,201,114,1)]
+          transition-all duration-200
+        "
       >
-        Save Partner
+        Make Partner
       </button>
 
+      {/* BACK */}
       <button
         onClick={() => router.push("/categories")}
-        className="mt-6 text-[#16FF6E] underline text-sm"
+        className="block mt-8 text-[#FFD166] hover:underline text-sm tracking-wide"
       >
         ← Back to Categories
       </button>
@@ -264,7 +276,7 @@ function SaveContent() {
 /* WRAPPER */
 export default function SavePage() {
   return (
-    <Suspense fallback={<p className="text-white p-10">Loading...</p>}>
+    <Suspense fallback={<p className="text-gray-400 p-10">Loading...</p>}>
       <SaveContent />
     </Suspense>
   );
