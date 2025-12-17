@@ -3,27 +3,29 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { db } from "@/firebase/config";
-import {
-  addDoc,
-  collection,
-  serverTimestamp,
-} from "firebase/firestore";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 
-export default function TradeTicketPage() {
+export default function TradeTicketsPage() {
   const router = useRouter();
 
-  /* 🔐 LOGIN CHECK */
-  const phone =
-    typeof window !== "undefined"
-      ? localStorage.getItem("phone")
-      : null;
+  /* 🔐 AUTH STATE */
+  const [phone, setPhone] = useState<string | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
-    if (!phone) {
+    if (typeof window === "undefined") return;
+
+    const storedPhone = localStorage.getItem("phone");
+
+    if (!storedPhone) {
       alert("Please login to trade tickets");
       router.push("/login");
+      return;
     }
-  }, [phone, router]);
+
+    setPhone(storedPhone.trim());
+    setAuthChecked(true);
+  }, [router]);
 
   /* FORM STATE */
   const [state, setState] = useState("");
@@ -35,13 +37,24 @@ export default function TradeTicketPage() {
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(false);
 
+  /* BLOCK UI UNTIL AUTH CHECK */
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black text-[#FFD166]">
+        Checking login…
+      </div>
+    );
+  }
+
   /* SUBMIT */
   const handleSubmit = async () => {
+    if (loading) return;
+
     if (
-      !state ||
-      !city ||
-      !theatre ||
-      !movie ||
+      !state.trim() ||
+      !city.trim() ||
+      !theatre.trim() ||
+      !movie.trim() ||
       !showDate ||
       !showTime ||
       quantity < 1
@@ -54,10 +67,10 @@ export default function TradeTicketPage() {
 
       await addDoc(collection(db, "movieTickets"), {
         sellerPhone: phone,
-        state,
-        city,
-        theatre,
-        movie,
+        state: state.trim(),
+        city: city.trim(),
+        theatre: theatre.trim(),
+        movie: movie.trim(),
         showDate,
         showTime,
         quantity,
@@ -149,6 +162,7 @@ export default function TradeTicketPage() {
             shadow-[0_0_18px_rgba(230,201,114,0.75)]
             hover:bg-[#F3DC8A]
             hover:text-black
+            disabled:opacity-60
             transition
           "
         >
@@ -166,3 +180,4 @@ export default function TradeTicketPage() {
     </div>
   );
 }
+``
