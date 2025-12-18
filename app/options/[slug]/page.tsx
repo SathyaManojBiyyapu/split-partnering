@@ -62,6 +62,17 @@ export default function OptionsPage() {
       {/* OPTIONS GRID */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
         {options.map((option) => {
+
+          /* ===================== ADDED (NO REMOVAL) ===================== */
+          const makePartnerSupported = Boolean(
+            partneringInfo?.[slug]?.makePartner
+          );
+
+          const finalHref = makePartnerSupported
+            ? `/make-partner?category=${slug}&option=${option.slug}`
+            : `/save?category=${slug}&option=${option.slug}`;
+          /* =============================================================== */
+
           /* 🎬 SPECIAL CASE: MOVIES → SAVE TICKET */
           if (slug === "movies" && option.slug === "save-ticket") {
             return (
@@ -84,7 +95,6 @@ export default function OptionsPage() {
                   {option.description}
                 </p>
 
-                {/* 🎟️ TWO BUTTONS */}
                 <div className="flex flex-col gap-4">
                   <Link
                     href="/movies/trade-ticket"
@@ -116,11 +126,18 @@ export default function OptionsPage() {
             );
           }
 
-          /* 🔁 ALL OTHER OPTIONS (UNCHANGED) */
+          /* 🔁 ALL OTHER OPTIONS (UNCHANGED UI) */
           return (
             <Link
               key={option.slug}
+
+              /* 🔽 ORIGINAL LINE KEPT (NOT REMOVED)
               href={`/save?category=${slug}&option=${option.slug}`}
+              */
+
+              /* ✅ ADDED: override destination safely */
+              href={finalHref}
+
               className="
                 p-6 rounded-2xl
                 border border-[#FFD166]/30
