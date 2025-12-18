@@ -15,6 +15,7 @@ const categoryOptions: Record<
     { name: "Day Pass", slug: "pass", description: "Partner for one-day gym access", emoji: "🎫" },
     { name: "Supplements", slug: "supplements", description: "Form a group to access bulk benefits", emoji: "💊" },
   ],
+
   fashion: [
     { name: "Peter England", slug: "peter-england", description: "Partner shopping for brand offers", emoji: "👔" },
     { name: "Louis Philippe", slug: "louis-philippe", description: "Partner shopping for brand offers", emoji: "👔" },
@@ -27,9 +28,36 @@ const categoryOptions: Record<
     { name: "Nike", slug: "nike", description: "Partner shopping for brand offers", emoji: "👟" },
     { name: "Adidas", slug: "adidas", description: "Partner shopping for brand offers", emoji: "👟" },
   ],
+
   movies: [
     { name: "Save Ticket", slug: "save-ticket", description: "Sell or find movie tickets", emoji: "🎬" },
     { name: "Bulk Ticket", slug: "bulk-ticket", description: "Form a group for booking benefits", emoji: "🎫" },
+  ],
+
+  /* ======= ADDED (NO LOGIC CHANGE) ======= */
+
+  lenskart: [
+    { name: "Eyeglasses", slug: "eyeglasses", description: "Partner to save on eyeglasses", emoji: "👓" },
+  ],
+
+  "local-travel": [
+    { name: "Cab Sharing", slug: "cab", description: "Split local travel cost", emoji: "🚗" },
+  ],
+
+  events: [
+    { name: "Event Passes", slug: "passes", description: "Group booking for events", emoji: "🎤" },
+  ],
+
+  coupons: [
+    { name: "Discount Coupons", slug: "discounts", description: "Share and use coupons", emoji: "🎟️" },
+  ],
+
+  villas: [
+    { name: "Weekend Stay", slug: "weekend", description: "Split villa stay cost", emoji: "🏡" },
+  ],
+
+  books: [
+    { name: "Academic Books", slug: "academic", description: "Share or buy books together", emoji: "📚" },
   ],
 };
 
@@ -37,6 +65,14 @@ const categoryNames: Record<string, string> = {
   gym: "Gym",
   fashion: "Fashion",
   movies: "Movies",
+
+  /* ======= ADDED (NO LOGIC CHANGE) ======= */
+  lenskart: "Lenskart",
+  "local-travel": "Local Travel",
+  events: "Events",
+  coupons: "Coupons",
+  villas: "Villas",
+  books: "Books",
 };
 
 /* ---------------- PAGE ---------------- */
@@ -62,8 +98,6 @@ export default function OptionsPage() {
       {/* OPTIONS GRID */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
         {options.map((option) => {
-
-          /* ===================== ADDED (NO REMOVAL) ===================== */
           const makePartnerSupported = Boolean(
             partneringInfo?.[slug]?.makePartner
           );
@@ -71,88 +105,37 @@ export default function OptionsPage() {
           const finalHref = makePartnerSupported
             ? `/make-partner?category=${slug}&option=${option.slug}`
             : `/save?category=${slug}&option=${option.slug}`;
-          /* =============================================================== */
 
           /* 🎬 SPECIAL CASE: MOVIES → SAVE TICKET */
           if (slug === "movies" && option.slug === "save-ticket") {
             return (
-              <div
-                key={option.slug}
-                className="
-                  p-6 rounded-2xl
-                  border border-[#FFD166]/30
-                  bg-gradient-to-b from-[#0c0c0c] to-black
-                  shadow-[0_0_20px_#FFD16622]
-                "
-              >
+              <div key={option.slug} className="p-6 rounded-2xl border border-[#FFD166]/30 bg-black">
                 <div className="text-4xl mb-3">{option.emoji}</div>
-
                 <h2 className="text-lg font-semibold text-[#FFD166] mb-2">
                   {option.name}
                 </h2>
-
                 <p className="text-sm text-gray-400 mb-6">
                   {option.description}
                 </p>
 
                 <div className="flex flex-col gap-4">
-                  <Link
-                    href="/movies/trade-ticket"
-                    className="
-                      text-center px-6 py-3 rounded-xl font-semibold
-                      bg-black text-[#E6C972]
-                      border border-[#E6C972]
-                      hover:bg-[#F3DC8A]
-                      hover:text-black
-                      transition
-                    "
-                  >
-                    🎟️ Trade Tickets
-                  </Link>
-
-                  <Link
-                    href="/movies/available-tickets"
-                    className="
-                      text-center px-6 py-3 rounded-xl font-semibold
-                      border border-gray-500
-                      hover:bg-white/10
-                      transition
-                    "
-                  >
-                    👀 Available Tickets
-                  </Link>
+                  <Link href="/movies/trade-ticket">🎟️ Trade Tickets</Link>
+                  <Link href="/movies/available-tickets">👀 Available Tickets</Link>
                 </div>
               </div>
             );
           }
 
-          /* 🔁 ALL OTHER OPTIONS (UNCHANGED UI) */
           return (
             <Link
               key={option.slug}
-
-              /* 🔽 ORIGINAL LINE KEPT (NOT REMOVED)
-              href={`/save?category=${slug}&option=${option.slug}`}
-              */
-
-              /* ✅ ADDED: override destination safely */
               href={finalHref}
-
-              className="
-                p-6 rounded-2xl
-                border border-[#FFD166]/30
-                bg-gradient-to-b from-[#0c0c0c] to-black
-                hover:border-[#FFD166]
-                hover:shadow-[0_0_20px_#FFD16633]
-                transition-all duration-300
-              "
+              className="p-6 rounded-2xl border border-[#FFD166]/30 bg-black hover:border-[#FFD166]"
             >
               <div className="text-4xl mb-3">{option.emoji}</div>
-
               <h2 className="text-lg font-semibold text-[#FFD166] mb-2">
                 {option.name}
               </h2>
-
               <p className="text-sm text-gray-400">
                 {option.description}
               </p>
@@ -161,29 +144,9 @@ export default function OptionsPage() {
         })}
       </div>
 
-      {/* CATEGORY INFO */}
-      {info && (
-        <div className="
-          mt-14 max-w-3xl mx-auto
-          border border-[#FFD166]/20
-          p-6 rounded-2xl
-          bg-gradient-to-br from-[#0e0e0e] to-black
-        ">
-          <h2 className="text-lg font-semibold text-[#FFD166] mb-2">
-            {info.title}
-          </h2>
-          <p className="text-gray-400 text-sm">
-            {info.topLine}
-          </p>
-        </div>
-      )}
-
       {/* BACK */}
       <div className="mt-14 text-center">
-        <Link
-          href="/categories"
-          className="text-[#FFD166] text-sm tracking-wide hover:underline"
-        >
+        <Link href="/categories" className="text-[#FFD166] hover:underline">
           ← Back to Categories
         </Link>
       </div>
