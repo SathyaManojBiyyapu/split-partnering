@@ -11,6 +11,13 @@ import {
   orderBy,
 } from "firebase/firestore";
 
+/* ✅ ADDED: FORMAT DATE & TIME (UI ONLY) */
+const formatDateTime = (ts: any) => {
+  if (!ts?.seconds) return "N/A";
+  const d = new Date(ts.seconds * 1000);
+  return `${d.toLocaleDateString()} · ${d.toLocaleTimeString()}`;
+};
+
 type Ticket = {
   id: string;
   state: string;
@@ -29,6 +36,7 @@ type Request = {
   ticketId: string;
   buyerPhone?: string;
   status: string;
+  createdAt?: any; // ✅ already exists in DB
 };
 
 export default function AdminTicketsPage() {
@@ -108,15 +116,23 @@ export default function AdminTicketsPage() {
                 <p className="text-sm text-gray-300">
                   <span className="text-[#FFD166]">Request ID:</span> {r.id}
                 </p>
+
                 <p className="text-sm text-gray-300">
                   <span className="text-[#FFD166]">Ticket ID:</span>{" "}
                   {r.ticketId}
                 </p>
+
                 <p className="text-sm text-gray-300">
                   <span className="text-[#FFD166]">Buyer Phone:</span>{" "}
                   {r.buyerPhone ?? "N/A"}
                 </p>
-                <p className="text-xs text-gray-400">
+
+                {/* ✅ ADDED: BOOKING DATE & TIME */}
+                <p className="text-xs text-gray-400 mt-1">
+                  📅 {formatDateTime(r.createdAt)}
+                </p>
+
+                <p className="text-xs text-gray-500 mt-1">
                   Status: {r.status}
                 </p>
               </div>

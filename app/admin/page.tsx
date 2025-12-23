@@ -14,6 +14,13 @@ import {
 const ADMIN_USERNAME = "admin";
 const ADMIN_PASSWORD = "Hari@2307";
 
+/* ✅ UI ONLY: FORMAT DATE & TIME */
+const formatDateTime = (ts: any) => {
+  if (!ts?.seconds) return "N/A";
+  const d = new Date(ts.seconds * 1000);
+  return `${d.toLocaleDateString()} · ${d.toLocaleTimeString()}`;
+};
+
 export default function AdminPage() {
   const [authorized, setAuthorized] = useState(false);
   const [usernameInput, setUsernameInput] = useState("");
@@ -224,23 +231,23 @@ export default function AdminPage() {
   if (!authorized) {
     return (
       <div className="pt-32 text-white flex flex-col items-center">
-        <h1 className="text-3xl font-bold text-[#16FF6E]">Admin Login</h1>
+        <h1 className="text-3xl font-bold text-[#FFD166]">Admin Login</h1>
 
         <form className="mt-6 w-72 space-y-4" onSubmit={loginAdmin}>
           <input
-            className="p-3 rounded text-black w-full"
+            className="p-3 rounded bg-black border border-[#FFD166] text-[#FFD166] w-full"
             placeholder="Username"
             value={usernameInput}
             onChange={(e) => setUsernameInput(e.target.value)}
           />
           <input
             type="password"
-            className="p-3 rounded text-black w-full"
+            className="p-3 rounded bg-black border border-[#FFD166] text-[#FFD166] w-full"
             placeholder="Password"
             value={passwordInput}
             onChange={(e) => setPasswordInput(e.target.value)}
           />
-          <button className="w-full bg-[#16FF6E] py-2 text-black rounded font-bold">
+          <button className="w-full bg-[#FFD166] py-2 text-black rounded font-bold">
             Login
           </button>
         </form>
@@ -252,17 +259,16 @@ export default function AdminPage() {
        DASHBOARD UI
   ---------------------------- */
   return (
-    <div className="pt-28 px-6 text-white">
+    <div className="pt-28 px-6 bg-black text-[#F5F5F5]">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-[#16FF6E]">
+        <h1 className="text-3xl font-bold text-[#FFD166]">
           Admin — Partner Groups
         </h1>
 
         <div className="flex gap-3">
-          {/* ✅ ONLY NEW ADDITION */}
           <button
             onClick={() => (window.location.href = "/admin/tickets")}
-            className="px-3 py-1 bg-yellow-500 text-black rounded text-xs"
+            className="px-3 py-1 bg-[#FFD166] text-black rounded text-xs"
           >
             Movie Tickets
           </button>
@@ -283,19 +289,38 @@ export default function AdminPage() {
           {groups.map((g) => (
             <div
               key={g.id}
-              className="p-4 bg-black/40 border border-[#16FF6E]/30 rounded-xl"
+              className="p-4 bg-[#0c0c0c] border border-[#FFD166]/30 rounded-xl"
             >
-              <p className="text-xl font-bold">
-                {g.category} → {g.option}
+              <div className="flex justify-between items-center">
+                <p className="text-xl font-bold text-[#FFD166]">
+                  {g.category} → {g.option}
+                </p>
+
+                <span
+                  className={`px-3 py-1 text-xs font-bold rounded-full ${
+                    g.status === "completed"
+                      ? "bg-green-600 text-white"
+                      : g.status === "ready"
+                      ? "bg-blue-600 text-white"
+                      : "bg-yellow-500 text-black"
+                  }`}
+                >
+                  {g.status ?? "waiting"}
+                </span>
+              </div>
+
+              <p className="text-[#FFD166] font-bold mt-1">
+                {g.membersCount}/{g.requiredSize}
               </p>
 
-              <p className="text-[#16FF6E] font-bold">
-                {g.membersCount}/{g.requiredSize}
+              {/* ✅ BOOKING DATE & TIME (ADDED) */}
+              <p className="text-xs text-gray-400 mt-1">
+                📅 {formatDateTime(g.createdAt)}
               </p>
 
               <div className="flex flex-wrap gap-2 mt-4">
                 <button
-                  className="bg-green-600 px-3 py-1 rounded"
+                  className="bg-[#FFD166] text-black px-3 py-1 rounded"
                   onClick={() => contactAll(g)}
                 >
                   WhatsApp All

@@ -21,6 +21,29 @@ export default function Sidebar() {
 
   return (
     <>
+      {/* ===== LOGIN / REGISTER BUTTON (ADDED – NOTHING ELSE TOUCHED) ===== */}
+      <button
+        onClick={() => {
+          if (loggedIn || guest) {
+            window.location.href = "/profile";
+          } else {
+            window.location.href = "/login";
+          }
+        }}
+        className="
+          fixed top-2 right-16 sm:top-3 sm:right-20 z-50
+          h-11 px-3 flex items-center justify-center
+          rounded-lg
+          bg-black text-gold-primary text-xs font-bold
+          border border-gold-primary
+          shadow-[0_0_18px_rgba(212,175,55,0.85)]
+          hover:bg-gold-primary hover:text-black
+          transition-all duration-200
+        "
+      >
+        {loggedIn || guest ? "Profile" : "Login"}
+      </button>
+
       {/* ===== SIDEBAR TOGGLE BUTTON ===== */}
       <button
         onClick={() => setOpen(true)}
