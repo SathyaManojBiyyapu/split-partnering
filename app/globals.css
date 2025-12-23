@@ -5,7 +5,7 @@
 @tailwind utilities;
 
 /* =========================
-   ROOT VARIABLES (PURE BLACK)
+   ROOT VARIABLES
 ========================= */
 :root {
   --bg-main: #000000;
@@ -59,19 +59,15 @@ body {
   background-position: center;
   background-repeat: no-repeat;
   background-attachment: fixed;
-  position: relative;
 }
 
-/* 🔥 DARK OVERLAY (MAKES IMAGE DULL & PREMIUM) */
+/* ✅ LIGHT BLACK TRANSPARENT OVERLAY */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0.65),
-    rgba(0, 0, 0, 0.9)
-  );
+  background: rgba(0, 0, 0, 0.38); /* 👈 LIGHT BLACK */
+  pointer-events: none;
   z-index: -1;
 }
 
@@ -121,10 +117,20 @@ body::before {
 }
 
 /* =========================
-   SAFETY OVERRIDES
+   SOFT TRANSPARENT SECTIONS
 ========================= */
 .bg-dark-section,
 .bg-section,
 .bg-main {
-  background-color: rgba(0, 0, 0, 0.85) !important;
+  background-color: rgba(10, 10, 10, 0.65) !important;
+  backdrop-filter: blur(2px);
+}
+
+/* =========================
+   OPTIONAL PREMIUM CARD
+========================= */
+.card-glass {
+  background: rgba(12, 12, 12, 0.6);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(212, 175, 55, 0.25);
 }

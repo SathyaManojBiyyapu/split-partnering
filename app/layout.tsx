@@ -11,7 +11,7 @@ import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 
 import { Inter, Playfair_Display } from "next/font/google";
-import { Toaster } from "react-hot-toast"; // ✅ ADDED
+import { Toaster } from "react-hot-toast";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -74,7 +74,6 @@ export default function RootLayout({ children }: any) {
   return (
     <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
       <body className="bg-black text-white font-body">
-
         <AuthProvider>
           <Navbar />
           <Sidebar />
@@ -86,7 +85,6 @@ export default function RootLayout({ children }: any) {
           <Footer />
         </AuthProvider>
 
-        {/* ✅ ADDED ONLY */}
         <Toaster
           position="top-center"
           toastOptions={{
@@ -99,7 +97,6 @@ export default function RootLayout({ children }: any) {
             },
           }}
         />
-
       </body>
     </html>
   );

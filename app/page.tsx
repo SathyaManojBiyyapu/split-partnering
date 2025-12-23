@@ -151,9 +151,77 @@ export default function HomePage() {
           </h2>
 
           <p className="text-text-muted text-sm leading-relaxed">
-            Many everyday purchases are cheaper when done together.
-            PartnerSync exists to structure that collaboration — safely,
-            transparently, and at scale.
+          Many everyday purchases become significantly cheaper when people collaborate.
+Yet most group-buying efforts fail due to lack of trust, coordination, and clarity.
+
+PartnerSync exists to solve that gap.
+
+We provide a structured platform where individuals can safely form
+cost-sharing partnerships, with clear group limits, transparent status,
+and admin oversight — removing chaos from collaboration.
+
+No selling. No pressure.
+Just smart coordination, built to scale.  
+
+You don’t negotiate.
+You don’t chase people.
+You don’t manage chaos.
+
+The system does it for you.
+
+1. Choose a Category
+
+Select where you want to save — movies, gym, travel, villas, fashion, and more.
+Each category is designed for cost-sharing opportunities.
+
+2. Join or Create a Group
+
+When you select an option, PartnerSync automatically places you into a capacity-based group.
+Groups are formed only when there is real intent, not noise.
+
+You can see:
+
+How many members have joined
+
+How many are still needed
+
+The group’s current status (waiting / ready)
+
+3. Smart Matching in Action
+
+PartnerSync continuously matches users based on:
+
+Category choice
+
+Timing
+
+Required group size
+
+This ensures fair, optimized grouping — without manual coordination.
+
+4. Admin-Moderated Coordination
+
+Once a group is ready, coordination happens in a controlled, transparent way.
+
+No forced sharing of details
+
+No direct spam
+
+Admin ensures clarity before any transaction
+
+This keeps collaboration safe and trustworthy.
+
+5. Collaborate. Split. Save.
+
+When the group completes:
+
+Costs are shared
+
+Benefits are unlocked
+
+Everyone saves together
+
+Simple collaboration. Real savings.
           </p>
         </div>
       </section>
