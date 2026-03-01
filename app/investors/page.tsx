@@ -232,7 +232,66 @@ export default function InvestorsPage() {
 
           </div>
         </section>
+        {/* ================= INVESTOR CONFIRMATION BOX ================= */}
+        <section className="mb-24">
+          <h2 className="font-heading text-2xl sm:text-3xl mb-10 text-center">
+            Ready to Invest in PartnerSync?
+          </h2>
 
+          <div className="investor-box max-w-3xl mx-auto">
+            
+            <div className="grid gap-6">
+
+              <div>
+                <label className="block mb-2 text-sm text-text-muted">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  placeholder="Enter your full name"
+                  className="input"
+                />
+              </div>
+
+              <div>
+                <label className="block mb-2 text-sm text-text-muted">
+                  Company / Investment Entity
+                </label>
+                <input
+                  type="text"
+                  placeholder="Enter company name"
+                  className="input"
+                />
+              </div>
+
+              <div>
+                <label className="block mb-2 text-sm text-text-muted">
+                  Intended Investment (Optional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Example: $50,000"
+                  className="input"
+                />
+              </div>
+
+              <div className="flex items-center gap-3 mt-2">
+                <input
+                  type="checkbox"
+                  className="accent-yellow-500 w-4 h-4"
+                />
+                <span className="text-sm text-text-muted">
+                  I am ready to invest and support the growth of PartnerSync.
+                </span>
+              </div>
+
+              <button className="btn-primary mt-4 w-full">
+                Submit Investment Interest
+              </button>
+
+            </div>
+          </div>
+        </section>
       </div>
     </main>
   );

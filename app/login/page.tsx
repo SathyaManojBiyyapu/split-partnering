@@ -1,19 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import {
   RecaptchaVerifier,
   signInWithPhoneNumber,
   signInWithPopup,
+  linkWithCredential,
+  PhoneAuthProvider,
+  UserInfo,
 } from "firebase/auth";
 
-import { auth, googleProvider } from "@/firebase/config";
-import toast from "react-hot-toast"; // ✅ ADDED (ONLY THIS IMPORT)
+import { auth, googleProvider, db } from "@/firebase/config";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import toast from "react-hot-toast";
 
 declare global {
   interface Window {
-    recaptchaVerifier: any;
+    recaptchaVerifier: RecaptchaVerifier;
     confirmationResult: any;
   }
 }
@@ -23,10 +26,34 @@ export default function LoginPage() {
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
+  const [isGoogleUser, setIsGoogleUser] = useState(false);
 
-  /* ------------------------------------------
+  /* -----------------------------
+     CREATE / UPDATE USER PROFILE
+  ----------------------------- */
+  const createUserProfile = async (user: any) => {
+    try {
+      await setDoc(
+        doc(db, "users", user.uid),
+        {
+          uid: user.uid,
+          name: user.displayName || localStorage.getItem("name") || "",
+          email: user.email || "",
+          phone: user.phoneNumber || localStorage.getItem("phone") || "",
+          town: localStorage.getItem("town") || "",
+          state: localStorage.getItem("state") || "",
+          createdAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
+    } catch (err) {
+      console.error("User profile creation error:", err);
+    }
+  };
+
+  /* -----------------------------
      SETUP RECAPTCHA
-  ------------------------------------------ */
+  ----------------------------- */
   const setupRecaptcha = () => {
     if (!window.recaptchaVerifier) {
       window.recaptchaVerifier = new RecaptchaVerifier(
@@ -38,13 +65,12 @@ export default function LoginPage() {
     return window.recaptchaVerifier;
   };
 
-  /* ------------------------------------------
-     LOGIN WITH OTP
-  ------------------------------------------ */
+  /* -----------------------------
+     OTP LOGIN
+  ----------------------------- */
   const handleLoginWithOTP = async () => {
     if (!phone || phone.length !== 10) {
-      alert("Enter valid 10-digit mobile number");
-      toast.error("Enter valid 10-digit mobile number"); // ✅ ADDED
+      toast.error("Enter valid 10-digit mobile number");
       return;
     }
 
@@ -53,6 +79,7 @@ export default function LoginPage() {
 
       if (!otpSent) {
         const verifier = setupRecaptcha();
+
         const confirmation = await signInWithPhoneNumber(
           auth,
           "+91" + phone,
@@ -61,38 +88,53 @@ export default function LoginPage() {
 
         window.confirmationResult = confirmation;
         setOtpSent(true);
-        alert("OTP sent to your mobile");
-        toast.success("OTP sent to your mobile 📩"); // ✅ ADDED
+        toast.success("OTP sent 📩");
         return;
       }
 
       if (!otp) {
-        alert("Enter OTP");
-        toast.error("Enter OTP"); // ✅ ADDED
+        toast.error("Enter OTP");
         return;
       }
 
-      await window.confirmationResult.confirm(otp);
+      const result = await window.confirmationResult.confirm(otp);
+      const user = result.user;
+
+      /* LINK GOOGLE + PHONE IF NEEDED */
+      if (isGoogleUser && auth.currentUser) {
+        const credential = PhoneAuthProvider.credential(
+          window.confirmationResult.verificationId,
+          otp
+        );
+        await linkWithCredential(auth.currentUser, credential);
+        toast.success("Google & Phone Linked 🔗");
+      }
+
+      /* CREATE USER PROFILE */
+      await createUserProfile(user);
+
+      const providers = user.providerData.map(
+        (p: UserInfo) => p.providerId
+      );
 
       localStorage.setItem("loggedIn", "true");
+      localStorage.setItem("uid", user.uid);
       localStorage.setItem("phone", phone.trim());
-      localStorage.removeItem("guest");
+      localStorage.setItem("providers", JSON.stringify(providers));
 
-      alert("Login successful!");
-      toast.success("Login successful 🎉"); // ✅ ADDED
+      toast.success("Login successful 🎉");
       window.location.href = "/profile";
-    } catch (err) {
-      console.error(err);
-      alert("OTP failed. Try again.");
-      toast.error("OTP failed. Try again ❌"); // ✅ ADDED
+    } catch (error) {
+      console.error(error);
+      toast.error("OTP verification failed ❌");
     } finally {
       setLoading(false);
     }
   };
 
-  /* ------------------------------------------
-     LOGIN WITH GOOGLE
-  ------------------------------------------ */
+  /* -----------------------------
+     GOOGLE LOGIN
+  ----------------------------- */
   const handleGoogleLogin = async () => {
     try {
       setLoading(true);
@@ -100,19 +142,26 @@ export default function LoginPage() {
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
 
+      setIsGoogleUser(true);
+
+      /* CREATE USER PROFILE */
+      await createUserProfile(user);
+
+      const providers = user.providerData.map(
+        (p: UserInfo) => p.providerId
+      );
+
       localStorage.setItem("loggedIn", "true");
       localStorage.setItem("uid", user.uid);
       localStorage.setItem("email", user.email || "");
       localStorage.setItem("name", user.displayName || "");
-      localStorage.removeItem("guest");
+      localStorage.setItem("providers", JSON.stringify(providers));
 
-      alert("Google login successful!");
-      toast.success("Google login successful 🎉"); // ✅ ADDED
+      toast.success("Google login successful 🎉");
       window.location.href = "/profile";
-    } catch (err) {
-      console.error(err);
-      alert("Google login failed");
-      toast.error("Google login failed ❌"); // ✅ ADDED
+    } catch (error) {
+      console.error(error);
+      toast.error("Google login failed ❌");
     } finally {
       setLoading(false);
     }
@@ -120,32 +169,43 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen pt-28 flex flex-col items-center text-white">
-      <h1 className="text-3xl font-bold text-gold-primary mb-8">
+      <h1 className="text-3xl font-bold text-[#E6C972] mb-8">
         Login / Signup
       </h1>
 
-      {/* PHONE INPUT */}
       <input
         type="tel"
         placeholder="Enter Mobile Number"
         value={phone}
         onChange={(e) => setPhone(e.target.value)}
-        className="neon-input w-64"
         disabled={otpSent}
+        className="
+          w-64 p-3 rounded-xl
+          bg-black border-2 border-[#E6C972]
+          text-[#E6C972]
+          shadow-[0_0_20px_rgba(230,201,114,0.8)]
+          focus:shadow-[0_0_40px_rgba(230,201,114,1)]
+          outline-none transition
+        "
       />
 
-      {/* OTP INPUT */}
       {otpSent && (
         <input
           type="number"
           placeholder="Enter OTP"
           value={otp}
           onChange={(e) => setOtp(e.target.value)}
-          className="neon-input w-64 mt-4"
+          className="
+            w-64 p-3 rounded-xl mt-4
+            bg-black border-2 border-[#E6C972]
+            text-[#E6C972]
+            shadow-[0_0_20px_rgba(230,201,114,0.8)]
+            focus:shadow-[0_0_40px_rgba(230,201,114,1)]
+            outline-none transition
+          "
         />
       )}
 
-      {/* OTP BUTTON */}
       <button
         onClick={handleLoginWithOTP}
         disabled={loading}
@@ -168,7 +228,6 @@ export default function LoginPage() {
           : "Login with OTP"}
       </button>
 
-      {/* GOOGLE LOGIN */}
       <button
         onClick={handleGoogleLogin}
         disabled={loading}
@@ -182,7 +241,6 @@ export default function LoginPage() {
         Continue with Google
       </button>
 
-      {/* ADMIN */}
       <button
         onClick={() => (window.location.href = "/admin")}
         className="text-[10px] opacity-30 mt-8 hover:opacity-60 transition"

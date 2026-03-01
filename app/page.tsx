@@ -287,7 +287,7 @@ Simple collaboration. Real savings.
         </div>
       </section>
 
-      {/* ================= TRUST ================= */}
+     {/* ================= TRUST ================= */}
       <section className="pb-28 px-6 border-t border-dark-card">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="font-heading text-2xl sm:text-3xl mb-4">

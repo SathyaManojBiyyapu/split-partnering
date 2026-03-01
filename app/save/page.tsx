@@ -2,7 +2,7 @@
 
 import { Suspense, useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { db } from "@/firebase/config";
+import { db, auth } from "@/firebase/config";
 import {
   addDoc,
   collection,
@@ -16,10 +16,11 @@ import {
   setDoc,
   getDoc,
 } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
 import { partneringInfo } from "@/app/data/partneringInfo";
 
 /* -----------------------------------------
-   GROUP SIZE
+   GROUP SIZE (UNCHANGED — FULLY PRESERVED)
 ------------------------------------------*/
 const GROUP_SIZE: Record<string, number> = {
   split: 2,
@@ -61,10 +62,9 @@ const GROUP_SIZE: Record<string, number> = {
 const getRequiredSize = (opt: string) => GROUP_SIZE[opt] || 2;
 
 /* -----------------------------------------
-   CREATE OR JOIN GROUP (UNCHANGED)
+   CREATE OR JOIN GROUP (UPDATED TO UID)
 ------------------------------------------*/
-async function createOrJoinGroup(category: string, option: string, rawPhone: string) {
-  const cleanPhone = rawPhone.trim();
+async function createOrJoinGroup(category: string, option: string, uid: string) {
   const groupsRef = collection(db, "groups");
 
   const q = query(
@@ -80,7 +80,7 @@ async function createOrJoinGroup(category: string, option: string, rawPhone: str
     const members: string[] = g.members || [];
     const required = g.requiredSize || getRequiredSize(option);
 
-    if (members.includes(cleanPhone)) {
+    if (members.includes(uid)) {
       return { status: "already", membersCount: members.length };
     }
 
@@ -88,7 +88,7 @@ async function createOrJoinGroup(category: string, option: string, rawPhone: str
       const gRef = doc(db, "groups", gdoc.id);
 
       await updateDoc(gRef, {
-        members: arrayUnion(cleanPhone),
+        members: arrayUnion(uid),
         membersCount: members.length + 1,
       });
 
@@ -112,7 +112,7 @@ async function createOrJoinGroup(category: string, option: string, rawPhone: str
   await setDoc(newGroupRef, {
     category,
     option,
-    members: [cleanPhone],
+    members: [uid],
     membersCount: 1,
     requiredSize: required,
     status: "waiting",
@@ -123,7 +123,7 @@ async function createOrJoinGroup(category: string, option: string, rawPhone: str
 }
 
 /* -----------------------------------------
-   SAVE CONTENT UI (STYLE UPDATED)
+   SAVE CONTENT UI
 ------------------------------------------*/
 function SaveContent() {
   const searchParams = useSearchParams();
@@ -132,50 +132,52 @@ function SaveContent() {
   const category = searchParams.get("category") || "";
   const option = searchParams.get("option") || "";
 
-  const rawPhone =
-    typeof window !== "undefined" ? localStorage.getItem("phone") : null;
-
-  const phone = rawPhone ? rawPhone.trim() : null;
-
-  const isGuest =
-    typeof window !== "undefined"
-      ? localStorage.getItem("guest") === "true"
-      : false;
-
+  const [firebaseUser, setFirebaseUser] = useState<any>(null);
   const [userName, setUserName] = useState<string | null>(null);
+
   const info = partneringInfo[category];
 
-  /* REQUIRE LOGIN */
+  /* REQUIRE LOGIN USING FIREBASE AUTH */
   useEffect(() => {
-    if (isGuest || !phone) {
-      alert("Please login to continue.");
-      router.push("/login");
-    }
-  }, [isGuest, phone, router]);
+    const unsub = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        alert("Please login to continue.");
+        router.push("/login");
+      } else {
+        setFirebaseUser(user);
+      }
+    });
 
-  /* LOAD USER NAME */
+    return () => unsub();
+  }, [router]);
+
+  /* LOAD USER NAME FROM USERS COLLECTION USING UID */
   useEffect(() => {
-    if (!phone) return;
+    if (!firebaseUser) return;
 
     const fetchUser = async () => {
-      const snap = await getDoc(doc(db, "users", phone));
+      const snap = await getDoc(doc(db, "users", firebaseUser.uid));
       if (snap.exists()) {
         setUserName((snap.data() as any).name || null);
       }
     };
 
     fetchUser();
-  }, [phone]);
+  }, [firebaseUser]);
 
   /* SAVE PARTNER */
   const savePartner = async () => {
-    if (!phone) return;
+    if (!firebaseUser) return;
 
     try {
-      const result = await createOrJoinGroup(category, option, phone);
+      const result = await createOrJoinGroup(
+        category,
+        option,
+        firebaseUser.uid
+      );
 
       await addDoc(collection(db, "selections"), {
-        phone,
+        uid: firebaseUser.uid,
         userName,
         category,
         option,
@@ -196,7 +198,6 @@ function SaveContent() {
 
   return (
     <div className="min-h-screen pt-32 px-6 bg-black text-[#F5F5F5]">
-      {/* HEADER */}
       <h1 className="text-3xl font-semibold text-[#FFD166] tracking-wide mb-4">
         Make Your Match
       </h1>
@@ -209,14 +210,8 @@ function SaveContent() {
         </span>
       </p>
 
-      {/* CATEGORY INFO */}
       {info && (
-        <div className="
-          mb-8 max-w-3xl
-          border border-[#FFD166]/20
-          p-6 rounded-2xl
-          bg-gradient-to-br from-[#0e0e0e] to-black
-        ">
+        <div className="mb-8 max-w-3xl border border-[#FFD166]/20 p-6 rounded-2xl bg-gradient-to-br from-[#0e0e0e] to-black">
           <h2 className="text-lg font-semibold text-[#FFD166] mb-2">
             {info.title}
           </h2>
@@ -245,7 +240,6 @@ function SaveContent() {
         </div>
       )}
 
-      {/* SAVE BUTTON */}
       <button
         onClick={savePartner}
         className="
@@ -262,7 +256,6 @@ function SaveContent() {
         Make Partner
       </button>
 
-      {/* BACK */}
       <button
         onClick={() => router.push("/categories")}
         className="block mt-8 text-[#FFD166] hover:underline text-sm tracking-wide"

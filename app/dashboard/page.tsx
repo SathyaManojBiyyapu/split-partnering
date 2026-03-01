@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { db } from "@/firebase/config";
+import { useRouter } from "next/navigation";
+import { db, auth } from "@/firebase/config";
 import {
   collection,
   query,
@@ -15,6 +16,7 @@ import {
   arrayRemove,
   DocumentData,
 } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
 
 type Group = {
   id: string;
@@ -28,30 +30,39 @@ type Group = {
 };
 
 export default function DashboardPage() {
-  const rawPhone =
-    typeof window !== "undefined" ? localStorage.getItem("phone") : null;
+  const router = useRouter();
 
-  const phone = rawPhone ? rawPhone.trim() : null;
-
+  const [firebaseUser, setFirebaseUser] = useState<any>(null);
   const [latestSelection, setLatestSelection] =
     useState<{ category: string; option: string } | null>(null);
-
   const [matches, setMatches] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
+  const [memberNames, setMemberNames] = useState<Record<string, string[]>>({});
+  const [paidGroups, setPaidGroups] = useState<Record<string, boolean>>({});
 
-  /* ------------------------------------------------
-        FETCH LATEST SELECTION
-  ------------------------------------------------ */
+  const town =
+    typeof window !== "undefined" ? localStorage.getItem("town") : null;
+  const state =
+    typeof window !== "undefined" ? localStorage.getItem("state") : null;
+
+  /* ---------------- AUTH LISTENER ---------------- */
   useEffect(() => {
-    if (!phone) {
-      setLoading(false);
-      return;
-    }
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setFirebaseUser(user);
+      if (!user) setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  /* ---------------- FETCH LATEST SELECTION ---------------- */
+  useEffect(() => {
+    if (!firebaseUser) return;
 
     const loadLatest = async () => {
       try {
         const selRef = collection(db, "selections");
-        const qSel = query(selRef, where("phone", "==", phone));
+        const qSel = query(selRef, where("uid", "==", firebaseUser.uid));
         const snap = await getDocs(qSel);
 
         if (!snap.empty) {
@@ -76,16 +87,17 @@ export default function DashboardPage() {
     };
 
     loadLatest();
-  }, [phone]);
+  }, [firebaseUser]);
 
-  /* ------------------------------------------------
-        FETCH MATCHED GROUPS
-  ------------------------------------------------ */
+  /* ---------------- FETCH GROUPS ---------------- */
   useEffect(() => {
-    if (!phone) return;
+    if (!firebaseUser) return;
 
     const groupsRef = collection(db, "groups");
-    const qGroups = query(groupsRef, where("members", "array-contains", phone));
+    const qGroups = query(
+      groupsRef,
+      where("members", "array-contains", firebaseUser.uid)
+    );
 
     const unsub = onSnapshot(qGroups, (snapshot) => {
       const list: Group[] = [];
@@ -97,7 +109,7 @@ export default function DashboardPage() {
           id: docSnap.id,
           category: data.category,
           option: data.option,
-          members: (data.members || []).map((p: string) => p.trim()),
+          members: data.members || [],
           membersCount:
             data.membersCount ?? (data.members ? data.members.length : 0),
           requiredSize: data.requiredSize,
@@ -108,21 +120,82 @@ export default function DashboardPage() {
 
       list.sort(
         (a, b) =>
-          (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)
+          (b.createdAt?.seconds || 0) -
+          (a.createdAt?.seconds || 0)
       );
 
       setMatches(list);
     });
 
     return () => unsub();
-  }, [phone]);
+  }, [firebaseUser]);
 
-  /* ------------------------------------------------
-        DELETE MATCH
-  ------------------------------------------------ */
+  /* ---------------- CHECK PAYMENT STATUS ---------------- */
+  useEffect(() => {
+    if (!firebaseUser || matches.length === 0) return;
+
+    const checkPayments = async () => {
+      const paidMap: Record<string, boolean> = {};
+
+      for (const group of matches) {
+        const paymentsRef = collection(db, "payments");
+        const qPay = query(
+          paymentsRef,
+          where("uid", "==", firebaseUser.uid),
+          where("groupId", "==", group.id),
+          where("status", "==", "paid")
+        );
+
+        const snap = await getDocs(qPay);
+        paidMap[group.id] = !snap.empty;
+      }
+
+      setPaidGroups(paidMap);
+    };
+
+    checkPayments();
+  }, [firebaseUser, matches]);
+
+  /* ---------------- FETCH MEMBER NAMES ---------------- */
+  useEffect(() => {
+    if (!matches.length) return;
+
+    const fetchNames = async () => {
+      const namesMap: Record<string, string[]> = {};
+
+      for (const group of matches) {
+        const names: string[] = [];
+
+        for (const uid of group.members) {
+          try {
+            const snap = await getDoc(doc(db, "users", uid));
+            if (snap.exists()) {
+              const fullName = snap.data().name || "Member";
+              const parts = fullName.split(" ");
+              const shortName =
+                parts.length > 1
+                  ? `${parts[0]} ${parts[1].charAt(0)}.`
+                  : parts[0];
+              names.push(shortName);
+            }
+          } catch {
+            names.push("Member");
+          }
+        }
+
+        namesMap[group.id] = names;
+      }
+
+      setMemberNames(namesMap);
+    };
+
+    fetchNames();
+  }, [matches]);
+
+  /* ---------------- DELETE MATCH ---------------- */
   const deleteMatch = async (groupId: string) => {
     if (!confirm("Remove this match?")) return;
-    if (!phone) return;
+    if (!firebaseUser) return;
 
     try {
       const gRef = doc(db, "groups", groupId);
@@ -135,7 +208,7 @@ export default function DashboardPage() {
       const newCount = Math.max(0, currentCount - 1);
 
       await updateDoc(gRef, {
-        members: arrayRemove(phone),
+        members: arrayRemove(firebaseUser.uid),
         membersCount: newCount,
       });
 
@@ -150,43 +223,44 @@ export default function DashboardPage() {
     }
   };
 
-  /* ------------------------------------------------
-        AUTH REQUIRED
-  ------------------------------------------------ */
-  if (!phone) {
+  const handleProceed = (groupId: string) => {
+    router.push(`/payment?groupId=${groupId}`);
+  };
+
+  const openChat = (groupId: string) => {
+    router.push(`/chat/${groupId}`);
+  };
+
+  /* ---------------- UI ---------------- */
+
+  if (!firebaseUser) {
     return (
       <div className="pt-32 px-6 max-w-5xl mx-auto">
         <h1 className="font-heading text-3xl text-gold-primary">
-          My Partners
+          Partner Sync
         </h1>
         <p className="mt-4 text-text-muted">
-          Please login with OTP to view your matches.
+          Please login to view your synced groups.
         </p>
       </div>
     );
   }
 
-  /* ------------------------------------------------
-        LOADING
-  ------------------------------------------------ */
   if (loading) {
     return (
       <div className="pt-32 px-6 max-w-5xl mx-auto">
         <h1 className="font-heading text-3xl text-gold-primary">
-          My Partners
+          Partner Sync
         </h1>
         <p className="mt-4 text-text-muted">Loading...</p>
       </div>
     );
   }
 
-  /* ------------------------------------------------
-        UI
-  ------------------------------------------------ */
   return (
     <div className="pt-32 px-6 max-w-5xl mx-auto">
       <h1 className="font-heading text-3xl text-gold-primary">
-        My Partners
+        Partner Sync
       </h1>
 
       {latestSelection && (
@@ -201,59 +275,89 @@ export default function DashboardPage() {
 
       {matches.length === 0 ? (
         <p className="text-text-muted mt-6">
-          No partners saved yet.
+          No partner sync groups yet.
         </p>
       ) : (
         <div className="mt-10 space-y-5">
-          {matches.map((group) => (
-            <div
-              key={group.id}
-              className="
-                rounded-2xl p-5
-                bg-black/40 border border-dark-card
-                hover:border-gold-primary
-                hover:shadow-[0_0_25px_rgba(212,175,55,0.35)]
-                transition
-              "
-            >
-              <p className="font-heading text-lg text-gold-primary capitalize">
-                {group.category.replace("-", " ")} → {group.option}
-              </p>
+          {matches.map((group) => {
+            const isPaid = paidGroups[group.id] || false;
 
-              <p className="mt-2 text-sm text-text-body">
-                Status:{" "}
-                <span
-                  className={
-                    group.status === "ready"
-                      ? "text-green-400"
-                      : group.status === "completed"
-                      ? "text-blue-400"
-                      : "text-yellow-400"
-                  }
-                >
-                  {group.status}
-                </span>
-              </p>
-
-              <p className="mt-1 text-sm text-text-muted">
-                Progress: {group.membersCount}/{group.requiredSize}
-              </p>
-
-              <button
-                onClick={() => deleteMatch(group.id)}
-                className="
-                  mt-4 px-4 py-2 text-xs font-medium
-                  rounded-full
-                  border border-red-500/40
-                  text-red-400
-                  hover:bg-red-600/20 hover:border-red-500
-                  transition
-                "
+            return (
+              <div
+                key={group.id}
+                className="relative rounded-2xl p-5 bg-black/40 border border-dark-card"
               >
-                Remove Match
-              </button>
-            </div>
-          ))}
+                {!isPaid ? (
+                  <button
+                    onClick={() => handleProceed(group.id)}
+                    className="absolute top-4 right-4 px-4 py-1 text-xs font-semibold bg-gold-primary text-black rounded-full"
+                  >
+                    Unlock Coordination – ₹29
+                  </button>
+                ) : group.status === "completed" ? (
+                  <div className="absolute top-4 right-4 flex items-center gap-3">
+                    <span className="text-green-400 text-xs font-semibold">
+                      🎉 Completed
+                    </span>
+                    <button
+                      onClick={() => openChat(group.id)}
+                      className="px-4 py-1 text-xs font-semibold bg-green-500 text-black rounded-full hover:bg-green-400 transition"
+                    >
+                      Enter Chat
+                    </button>
+                  </div>
+                ) : group.status === "ready" ? (
+                  <div className="absolute top-4 right-4 text-green-400 text-xs font-semibold">
+                    ✅ Activated – Waiting for others
+                  </div>
+                ) : (
+                  <div className="absolute top-4 right-4 text-yellow-400 text-xs font-semibold">
+                    ⏳ Waiting for group to fill...
+                  </div>
+                )}
+
+                <p className="font-heading text-lg text-gold-primary capitalize">
+                  {group.category.replace("-", " ")} → {group.option}
+                </p>
+
+                <div className="mt-2 text-sm text-text-body">
+                  🔄 {group.membersCount}/{group.requiredSize} Members Synced
+                  {group.requiredSize - group.membersCount === 1 && (
+                    <div className="text-xs mt-1 text-red-400 font-semibold">
+                      ⚡ Only 1 slot left!
+                    </div>
+                  )}
+                </div>
+
+                {memberNames[group.id] && (
+                  <div className="mt-3 text-sm text-text-muted space-y-1">
+                    {memberNames[group.id].map((name, index) => (
+                      <p key={index}>• {name}</p>
+                    ))}
+
+                    {!isPaid && (
+                      <p className="text-xs mt-2 text-yellow-400">
+                        🔒 Full coordination unlocks after activation
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {town && state && (
+                  <p className="mt-2 text-xs text-text-muted">
+                    📍 {town}, {state}
+                  </p>
+                )}
+
+                <button
+                  onClick={() => deleteMatch(group.id)}
+                  className="mt-4 px-4 py-2 text-xs font-medium rounded-full border border-red-500/40 text-red-400 hover:bg-red-600/20 transition"
+                >
+                  Leave Group
+                </button>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
